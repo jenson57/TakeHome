@@ -25,10 +25,26 @@ export default function Home() {
             </div>
             <span className="font-bold text-black text-lg tracking-tight">Takehome</span>
           </div>
-          <div className="nav-buttons flex items-center gap-6">
-            <Link href="/calculator" className="text-sm text-gray-600 hover:text-blue-700 font-medium transition-colors">Calculator</Link>
-<Link href="/dashboard" className="text-sm text-gray-600 hover:text-blue-700 font-medium transition-colors">Dashboard</Link>
-            <Link href="/calculator" style={{background: 'linear-gradient(135deg, #1a56db, #0e3fa8)', color: 'white', padding: '10px 22px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', textDecoration: 'none', boxShadow: '0 2px 8px rgba(26,86,219,0.3)'}}>
+          <div className="nav-buttons" style={{display:'flex', alignItems:'center', gap:'12px'}}>
+            <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
+              {[
+                { href:'/', label:'Home', icon:'🏠', active:true },
+                { href:'/calculator', label:'Calculator', icon:'💷' },
+                { href:'/dashboard', label:'Dashboard', icon:'📊' },
+              ].map(tab => (
+                <Link key={tab.href} href={tab.href} style={{
+                  display:'flex', alignItems:'center', gap:'6px',
+                  padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500',
+                  color: tab.active ? '#1a56db' : '#6b7280',
+                  background: tab.active ? 'white' : 'transparent',
+                  textDecoration:'none',
+                  boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none',
+                }}>
+                  <span>{tab.icon}</span>{tab.label}
+                </Link>
+              ))}
+            </div>
+            <Link href="/calculator" style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'10px 22px', borderRadius:'8px', fontSize:'14px', fontWeight:'600', textDecoration:'none', boxShadow:'0 2px 8px rgba(26,86,219,0.3)'}}>
               Get started free
             </Link>
           </div>

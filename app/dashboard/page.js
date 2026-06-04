@@ -124,9 +124,24 @@ export default function Dashboard() {
             </div>
             <span style={{fontWeight:'800', color:'#0a1628', fontSize:'18px', letterSpacing:'-0.3px'}}>Takehome</span>
           </Link>
-          <div className="flex items-center gap-6">
-            <Link href="/calculator" style={{fontSize:'14px', color:'#6b7280', textDecoration:'none', fontWeight:'500'}}>Calculator</Link>
-            <Link href="/dashboard" style={{fontSize:'14px', color:'#1a56db', textDecoration:'none', fontWeight:'700', borderBottom:'2px solid #1a56db', paddingBottom:'2px'}}>Dashboard</Link>
+          <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
+            {[
+              { href:'/', label:'Home', icon:'🏠' },
+              { href:'/calculator', label:'Calculator', icon:'💷' },
+              { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+            ].map(tab => (
+              <Link key={tab.href} href={tab.href} style={{
+                display:'flex', alignItems:'center', gap:'6px',
+                padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500',
+                color: tab.active ? '#1a56db' : '#6b7280',
+                background: tab.active ? 'white' : 'transparent',
+                textDecoration:'none',
+                boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none',
+                transition:'all 0.15s'
+              }}>
+                <span>{tab.icon}</span>{tab.label}
+              </Link>
+            ))}
           </div>
         </div>
       </nav>
