@@ -27,6 +27,7 @@ export default function Home() {
           </div>
           <div className="nav-buttons flex items-center gap-6">
             <Link href="/calculator" className="text-sm text-gray-600 hover:text-blue-700 font-medium transition-colors">Calculator</Link>
+<Link href="/dashboard" className="text-sm text-gray-600 hover:text-blue-700 font-medium transition-colors">Dashboard</Link>
             <Link href="/calculator" style={{background: 'linear-gradient(135deg, #1a56db, #0e3fa8)', color: 'white', padding: '10px 22px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', textDecoration: 'none', boxShadow: '0 2px 8px rgba(26,86,219,0.3)'}}>
               Get started free
             </Link>
