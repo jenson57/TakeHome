@@ -4,6 +4,17 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
+      <style>{`
+        @media (max-width: 640px) {
+          .feature-grid { grid-template-columns: 1fr !important; }
+          .stats-grid { grid-template-columns: 1fr !important; }
+          .testimonial-grid { grid-template-columns: 1fr !important; }
+          .preview-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .hero-title { font-size: 36px !important; letter-spacing: -0.5px !important; }
+          .nav-buttons { display: none !important; }
+          .hero-section { padding-top: 48px !important; padding-bottom: 48px !important; }
+        }
+      `}</style>
 
       {/* Nav */}
       <nav style={{borderBottom: '1px solid #e8f0fe'}} className="px-6 py-4 bg-white sticky top-0 z-50">
@@ -14,7 +25,7 @@ export default function Home() {
             </div>
             <span className="font-bold text-black text-lg tracking-tight">Takehome</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="nav-buttons flex items-center gap-6">
             <Link href="/calculator" className="text-sm text-gray-600 hover:text-blue-700 font-medium transition-colors">Calculator</Link>
             <Link href="/calculator" style={{background: 'linear-gradient(135deg, #1a56db, #0e3fa8)', color: 'white', padding: '10px 22px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', textDecoration: 'none', boxShadow: '0 2px 8px rgba(26,86,219,0.3)'}}>
               Get started free
@@ -24,13 +35,13 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section style={{background: 'linear-gradient(160deg, #f0f5ff 0%, #ffffff 60%)'}} className="px-6 pt-24 pb-20">
+      <section className="hero-section" style={{background: 'linear-gradient(160deg, #f0f5ff 0%, #ffffff 60%)', padding: '96px 24px 80px'}}>
         <div className="max-w-4xl mx-auto text-center">
           <div style={{display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#e8f0fe', borderRadius: '999px', padding: '6px 16px', marginBottom: '28px'}}>
             <div style={{width: '8px', height: '8px', borderRadius: '50%', background: '#1a56db'}}></div>
             <span style={{fontSize: '13px', color: '#1a56db', fontWeight: '600'}}>Free · No sign up required · UK tax rates 2024/25</span>
           </div>
-          <h1 style={{fontSize: '58px', fontWeight: '800', lineHeight: '1.1', color: '#0a1628', letterSpacing: '-1.5px'}} className="mb-6">
+          <h1 className="hero-title" style={{fontSize: '58px', fontWeight: '800', lineHeight: '1.1', color: '#0a1628', letterSpacing: '-1.5px', marginBottom: '24px'}}>
             Know exactly what<br />
             <span style={{background: 'linear-gradient(135deg, #1a56db, #0e3fa8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>lands in your pocket</span>
           </h1>
@@ -49,7 +60,7 @@ export default function Home() {
         <div className="max-w-2xl mx-auto mt-16">
           <div style={{background: 'white', borderRadius: '20px', boxShadow: '0 20px 60px rgba(26,86,219,0.12)', border: '1px solid #e8f0fe', padding: '28px'}}>
             <p style={{fontSize: '13px', fontWeight: '600', color: '#718096', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Live preview</p>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px'}}>
+            <div className="preview-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px'}}>
               {[['Gross pay', '£2,917', '#0a1628'], ['Income tax', '-£384', '#0a1628'], ['Nat. Insurance', '-£243', '#0a1628'], ['Take-home', '£2,290', '#1a56db']].map(([label, value, color]) => (
                 <div key={label} style={{background: '#f7f9ff', borderRadius: '12px', padding: '14px', textAlign: 'center'}}>
                   <p style={{fontSize: '11px', color: '#718096', marginBottom: '6px'}}>{label}</p>
@@ -80,7 +91,7 @@ export default function Home() {
       {/* Stats bar */}
       <section style={{background: 'linear-gradient(135deg, #1a56db, #0e3fa8)', padding: '28px 24px'}}>
         <div className="max-w-4xl mx-auto">
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', textAlign: 'center'}}>
+          <div className="stats-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', textAlign: 'center'}}>
             {[['100% Free', 'No hidden costs ever'], ['UK Accurate', '2024/25 tax rates'], ['Instant Results', 'No sign up needed']].map(([stat, label]) => (
               <div key={stat}>
                 <p style={{fontSize: '22px', fontWeight: '800', color: 'white', marginBottom: '4px'}}>{stat}</p>
@@ -98,16 +109,16 @@ export default function Home() {
             <p style={{fontSize: '13px', fontWeight: '600', color: '#1a56db', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px'}}>Features</p>
             <h2 style={{fontSize: '38px', fontWeight: '800', color: '#0a1628', letterSpacing: '-0.5px'}}>Everything you need to understand your pay</h2>
           </div>
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px'}}>
+          <div className="feature-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px'}}>
             {[
-              { icon: '💷', title: 'Accurate tax calculations', desc: 'Up to date with the latest UK income tax bands and National Insurance rates for 2024/25.' },
-              { icon: '📊', title: 'Visual budget planner', desc: 'Drag sliders to allocate your take-home across categories like rent, food, savings and more.' },
-              { icon: '🏦', title: 'Multiple income sources', desc: 'Add salary, hourly, weekly or fortnightly pay — even combine multiple jobs for a full picture.' },
-              { icon: '🎯', title: 'Instant breakdown', desc: 'See exactly how much goes to HMRC and how much lands in your pocket every month.' },
-              { icon: '📈', title: 'Hourly rate converter', desc: 'Enter your hourly rate and hours per week — we calculate your annual and monthly equivalent.' },
-              { icon: '✅', title: 'Always free', desc: 'No sign up, no subscription, no credit card. Takehome is completely free to use, forever.' },
+              { icon: "💷", title: "Accurate tax calculations", desc: "Up to date with the latest UK income tax bands and National Insurance rates for 2024/25." },
+              { icon: "📊", title: "Visual budget planner", desc: "Drag sliders to allocate your take-home across categories like rent, food, savings and more." },
+              { icon: "🏦", title: "Multiple income sources", desc: "Add salary, hourly, weekly or fortnightly pay. Even combine multiple jobs for a full picture." },
+              { icon: "🎯", title: "Instant breakdown", desc: "See exactly how much goes to HMRC and how much lands in your pocket every month." },
+              { icon: "📈", title: "Hourly rate converter", desc: "Enter your hourly rate and hours per week. We calculate your annual and monthly equivalent." },
+              { icon: "✅", title: "Always free", desc: "No sign up, no subscription, no credit card. Takehome is completely free to use, forever." },
             ].map(f => (
-              <div key={f.title} style={{background: 'white', border: '1px solid #e8f0fe', borderRadius: '16px', padding: '28px', transition: 'box-shadow 0.2s'}}
+              <div key={f.title} style={{background: 'white', border: '1px solid #e8f0fe', borderRadius: '16px', padding: '28px'}}
                 onMouseEnter={e => e.currentTarget.style.boxShadow='0 8px 30px rgba(26,86,219,0.1)'}
                 onMouseLeave={e => e.currentTarget.style.boxShadow='none'}>
                 <div style={{fontSize: '32px', marginBottom: '16px'}}>{f.icon}</div>
@@ -126,10 +137,10 @@ export default function Home() {
             <p style={{fontSize: '13px', fontWeight: '600', color: '#1a56db', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px'}}>Testimonials</p>
             <h2 style={{fontSize: '38px', fontWeight: '800', color: '#0a1628', letterSpacing: '-0.5px'}}>Trusted by people across the UK</h2>
           </div>
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px'}}>
+          <div className="testimonial-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px'}}>
             {[
               { quote: "Finally a tool that just works. I checked my payslip against it and it was spot on.", name: "Sarah M.", role: "Marketing Manager, London" },
-              { quote: "I use it every time I consider a new job offer — helps me compare salaries properly.", name: "James T.", role: "Software Engineer, Manchester" },
+              { quote: "I use it every time I consider a new job offer. Helps me compare salaries properly.", name: "James T.", role: "Software Engineer, Manchester" },
               { quote: "The budget planner made me realise how much I was overspending on subscriptions!", name: "Priya K.", role: "Nurse, Birmingham" },
             ].map(t => (
               <div key={t.name} style={{background: 'white', border: '1px solid #e8f0fe', borderRadius: '16px', padding: '28px'}}>
