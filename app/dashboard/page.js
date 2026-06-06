@@ -1,15 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { supabase } from "../supabase";
+import { useRouter } from "next/navigation";
 
 const CATEGORIES = [
   { name: "Housing", keywords: ["rent", "mortgage", "letting", "estate"], color: "#1a56db", icon: "🏠" },
   { name: "Food & Groceries", keywords: ["tesco", "sainsbury", "asda", "morrisons", "aldi", "lidl", "waitrose", "marks", "grocery", "supermarket", "food"], color: "#1D9E75", icon: "🛒" },
-  { name: "Transport", keywords: ["fuel", "petrol", "diesel", "uber", "taxi", "tfl", "trainline", "national rail", "bus", "parking", "mot", "insurance car"], color: "#D85A30", icon: "🚗" },
+  { name: "Transport", keywords: ["fuel", "petrol", "diesel", "uber", "taxi", "tfl", "trainline", "national rail", "bus", "parking", "mot"], color: "#D85A30", icon: "🚗" },
   { name: "Eating Out", keywords: ["restaurant", "cafe", "coffee", "starbucks", "costa", "mcdonalds", "kfc", "nando", "deliveroo", "just eat", "uber eats", "takeaway"], color: "#D4537E", icon: "🍽️" },
   { name: "Entertainment", keywords: ["netflix", "spotify", "cinema", "amazon prime", "disney", "apple tv", "game", "steam", "ticket"], color: "#7C3AED", icon: "🎬" },
   { name: "Shopping", keywords: ["amazon", "ebay", "asos", "zara", "h&m", "primark", "next", "john lewis", "argos", "ikea"], color: "#D97706", icon: "🛍️" },
-  { name: "Health", keywords: ["pharmacy", "boots", "gym", "fitness", "doctor", "dentist", "hospital", "medical", "vision"], color: "#059669", icon: "💊" },
+  { name: "Health", keywords: ["pharmacy", "boots", "gym", "fitness", "doctor", "dentist", "hospital", "medical"], color: "#059669", icon: "💊" },
   { name: "Savings", keywords: ["savings", "transfer", "investment", "stocks", "isa", "pension"], color: "#0891B2", icon: "🏦" },
   { name: "Bills & Utilities", keywords: ["electric", "gas", "water", "broadband", "wifi", "phone", "council tax", "tv licence", "sky", "virgin"], color: "#6B7280", icon: "📱" },
   { name: "Other", keywords: [], color: "#9CA3AF", icon: "📦" },
@@ -28,22 +30,54 @@ function fmt(n) {
 }
 
 export default function Dashboard() {
+  const [user, setUser] = useState(null);
   const [netPay, setNetPay] = useState(2290);
-  const [transactions, setTransactions] = useState([
-    { id: 1, date: "2026-06-01", description: "Tesco", amount: 85.50, category: "Food & Groceries" },
-    { id: 2, date: "2026-06-01", description: "Rent payment", amount: 950, category: "Housing" },
-    { id: 3, date: "2026-06-02", description: "Uber", amount: 12.40, category: "Transport" },
-    { id: 4, date: "2026-06-02", description: "Netflix", amount: 10.99, category: "Entertainment" },
-    { id: 5, date: "2026-06-03", description: "Deliveroo", amount: 24.50, category: "Eating Out" },
-    { id: 6, date: "2026-06-03", description: "Spotify", amount: 9.99, category: "Entertainment" },
-    { id: 7, date: "2026-06-04", description: "Amazon", amount: 34.99, category: "Shopping" },
-    { id: 8, date: "2026-06-04", description: "Sainsbury", amount: 62.30, category: "Food & Groceries" },
-  ]);
-
+  const [transactions, setTransactions] = useState([]);
   const [form, setForm] = useState({ date: "", description: "", amount: "", category: "" });
   const [editingId, setEditingId] = useState(null);
   const [filterCat, setFilterCat] = useState("All");
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // Load user and their data
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push("/login"); return; }
+      setUser(user);
+
+      // Load transactions
+      const { data: txns } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
+      if (txns) setTransactions(txns);
+
+      // Load budget settings
+      const { data: settings } = await supabase
+        .from("budget_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      if (settings) setNetPay(settings.net_pay);
+
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  // Save net pay to Supabase when it changes
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("budget_settings").upsert({ user_id: user.id, net_pay: netPay }, { onConflict: "user_id" });
+  }, [netPay, user]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   const totalSpent = transactions.reduce((s, t) => s + parseFloat(t.amount), 0);
   const remaining = netPay - totalSpent;
@@ -61,19 +95,35 @@ export default function Dashboard() {
     setForm(f => ({ ...f, description: val, category: cat }));
   };
 
-  const addTransaction = () => {
+  const addTransaction = async () => {
     if (!form.description || !form.amount || !form.date) return;
+    const category = form.category || categorise(form.description);
+
     if (editingId !== null) {
-      setTransactions(prev => prev.map(t => t.id === editingId ? { ...t, ...form, amount: parseFloat(form.amount) } : t));
+      const { data } = await supabase
+        .from("transactions")
+        .update({ ...form, amount: parseFloat(form.amount), category })
+        .eq("id", editingId)
+        .select()
+        .single();
+      if (data) setTransactions(prev => prev.map(t => t.id === editingId ? data : t));
       setEditingId(null);
     } else {
-      setTransactions(prev => [...prev, { ...form, id: Date.now(), amount: parseFloat(form.amount), category: form.category || categorise(form.description) }]);
+      const { data } = await supabase
+        .from("transactions")
+        .insert({ ...form, amount: parseFloat(form.amount), category, user_id: user.id })
+        .select()
+        .single();
+      if (data) setTransactions(prev => [data, ...prev]);
     }
     setForm({ date: "", description: "", amount: "", category: "" });
     setShowForm(false);
   };
 
-  const deleteTransaction = (id) => setTransactions(prev => prev.filter(t => t.id !== id));
+  const deleteTransaction = async (id) => {
+    await supabase.from("transactions").delete().eq("id", id);
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  };
 
   const editTransaction = (t) => {
     setForm({ date: t.date, description: t.description, amount: t.amount, category: t.category });
@@ -84,7 +134,6 @@ export default function Dashboard() {
   const filtered = filterCat === "All" ? transactions : transactions.filter(t => t.category === filterCat);
   const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Pie chart slices
   const pieSlices = (() => {
     if (categoryTotals.length === 0) return [];
     let cumulative = 0;
@@ -104,16 +153,20 @@ export default function Dashboard() {
     });
   })();
 
+  if (loading) return (
+    <main className="min-h-screen" style={{background:'#f7f9ff', display:'flex', alignItems:'center', justifyContent:'center'}}>
+      <div style={{textAlign:'center'}}>
+        <div style={{width:'48px', height:'48px', borderRadius:'14px', background:'linear-gradient(135deg, #1a56db, #0e3fa8)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px'}}>
+          <span style={{color:'white', fontWeight:'800', fontSize:'22px'}}>T</span>
+        </div>
+        <p style={{color:'#6b7280', fontSize:'15px', fontWeight:'500'}}>Loading your dashboard...</p>
+      </div>
+    </main>
+  );
+
   return (
     <main className="min-h-screen" style={{background: '#f7f9ff'}}>
-      <style>{`
-        @media(max-width:640px){
-          .dash-grid{grid-template-columns:1fr!important}
-          .summary-grid{grid-template-columns:1fr 1fr!important}
-          .header-row{flex-direction:column!important;align-items:flex-start!important}
-          .form-grid{grid-template-columns:1fr!important}
-        }
-      `}</style>
+      <style>{`@media(max-width:640px){.dash-grid{grid-template-columns:1fr!important}.summary-grid{grid-template-columns:1fr 1fr!important}.header-row{flex-direction:column!important;align-items:flex-start!important}.form-grid{grid-template-columns:1fr!important}}`}</style>
 
       {/* Nav */}
       <nav style={{borderBottom:'1px solid #e8f0fe', background:'white'}} className="px-6 py-4 sticky top-0 z-50">
@@ -124,24 +177,21 @@ export default function Dashboard() {
             </div>
             <span style={{fontWeight:'800', color:'#0a1628', fontSize:'18px', letterSpacing:'-0.3px'}}>Takehome</span>
           </Link>
-          <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
-            {[
-              { href:'/', label:'Home', icon:'🏠' },
-              { href:'/calculator', label:'Calculator', icon:'💷' },
-              { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-            ].map(tab => (
-              <Link key={tab.href} href={tab.href} style={{
-                display:'flex', alignItems:'center', gap:'6px',
-                padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500',
-                color: tab.active ? '#1a56db' : '#6b7280',
-                background: tab.active ? 'white' : 'transparent',
-                textDecoration:'none',
-                boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none',
-                transition:'all 0.15s'
-              }}>
-                <span>{tab.icon}</span>{tab.label}
-              </Link>
-            ))}
+          <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+            <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
+              {[
+                { href:'/', label:'Home', icon:'🏠' },
+                { href:'/calculator', label:'Calculator', icon:'💷' },
+                { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+              ].map(tab => (
+                <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
+                  <span>{tab.icon}</span>{tab.label}
+                </Link>
+              ))}
+            </div>
+            <button onClick={handleSignOut} style={{background:'#f3f4f6', border:'none', borderRadius:'10px', padding:'8px 16px', fontSize:'14px', color:'#6b7280', cursor:'pointer', fontWeight:'600'}}>
+              Sign out
+            </button>
           </div>
         </div>
       </nav>
@@ -153,7 +203,7 @@ export default function Dashboard() {
           <div>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'6px'}}>Finance Tracker</p>
             <h1 style={{fontSize:'32px', fontWeight:'800', color:'#0a1628', letterSpacing:'-0.5px', marginBottom:'6px'}}>Spending Dashboard</h1>
-            <p style={{fontSize:'15px', color:'#6b7280'}}>Track and categorise your spending against your take-home pay</p>
+            <p style={{fontSize:'15px', color:'#6b7280'}}>Welcome back, {user?.email}</p>
           </div>
           <div style={{display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap'}}>
             <div style={{display:'flex', alignItems:'center', gap:'8px', background:'white', border:'1px solid #e8f0fe', borderRadius:'12px', padding:'10px 16px', boxShadow:'0 2px 8px rgba(26,86,219,0.06)'}}>
@@ -165,7 +215,7 @@ export default function Dashboard() {
               </div>
             </div>
             <button onClick={() => { setShowForm(true); setEditingId(null); setForm({ date:"", description:"", amount:"", category:"" }); }}
-              style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'none', cursor:'pointer', boxShadow:'0 4px 12px rgba(26,86,219,0.3)', whiteSpace:'nowrap'}}>
+              style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'none', cursor:'pointer', boxShadow:'0 4px 12px rgba(26,86,219,0.3)'}}>
               + Add transaction
             </button>
           </div>
@@ -189,7 +239,7 @@ export default function Dashboard() {
               ))}
             </div>
             <div style={{display:'flex', gap:'10px'}}>
-              <button onClick={addTransaction} style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'11px 28px', borderRadius:'10px', fontSize:'14px', fontWeight:'700', border:'none', cursor:'pointer', boxShadow:'0 2px 8px rgba(26,86,219,0.25)'}}>
+              <button onClick={addTransaction} style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'11px 28px', borderRadius:'10px', fontSize:'14px', fontWeight:'700', border:'none', cursor:'pointer'}}>
                 {editingId !== null ? "Save changes" : "Add transaction"}
               </button>
               <button onClick={() => { setShowForm(false); setEditingId(null); }} style={{background:'#f3f4f6', color:'#6b7280', padding:'11px 28px', borderRadius:'10px', fontSize:'14px', fontWeight:'600', border:'none', cursor:'pointer'}}>
@@ -218,7 +268,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Progress bar card */}
+        {/* Progress bar */}
         <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'14px'}}>
             <div>
@@ -238,7 +288,6 @@ export default function Dashboard() {
 
         {/* Category breakdown + pie chart */}
         <div className="dash-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px', marginBottom:'24px'}}>
-
           <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Breakdown</p>
             <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>Spending by category</h2>
@@ -315,7 +364,7 @@ export default function Dashboard() {
                 {sorted.map(t => {
                   const cat = CATEGORIES.find(c => c.name === t.category) || CATEGORIES[CATEGORIES.length - 1];
                   return (
-                    <div key={t.id} style={{display:'flex', alignItems:'center', gap:'14px', padding:'14px 12px', borderRadius:'12px', transition:'background 0.15s', cursor:'default'}}
+                    <div key={t.id} style={{display:'flex', alignItems:'center', gap:'14px', padding:'14px 12px', borderRadius:'12px', transition:'background 0.15s'}}
                       onMouseEnter={e => e.currentTarget.style.background='#f7f9ff'}
                       onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                       <div style={{width:'42px', height:'42px', borderRadius:'12px', background:cat.color+'18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', flexShrink:0}}>
@@ -336,7 +385,6 @@ export default function Dashboard() {
               </div>
           }
         </div>
-
       </div>
     </main>
   );
