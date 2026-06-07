@@ -8,6 +8,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -17,6 +18,16 @@ export default function Login() {
     setLoading(true);
     setError("");
     setMessage("");
+
+    if (isForgotPassword) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://gettakehome.xyz/reset-password",
+      });
+      if (error) setError(error.message);
+      else setMessage("Check your email for a password reset link!");
+      setLoading(false);
+      return;
+    }
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({ email, password });
@@ -54,10 +65,10 @@ export default function Login() {
               <span style={{color:'white', fontWeight:'800', fontSize:'22px'}}>T</span>
             </div>
             <h1 style={{fontSize:'24px', fontWeight:'800', color:'#0a1628', marginBottom:'8px', letterSpacing:'-0.3px'}}>
-              {isSignUp ? "Create your account" : "Welcome back"}
+              {isForgotPassword ? "Reset your password" : isSignUp ? "Create your account" : "Welcome back"}
             </h1>
             <p style={{fontSize:'14px', color:'#6b7280'}}>
-              {isSignUp ? "Start tracking your take-home pay" : "Sign in to your Takehome account"}
+              {isForgotPassword ? "Enter your email and we'll send a reset link" : isSignUp ? "Start tracking your take-home pay" : "Sign in to your Takehome account"}
             </p>
           </div>
 
@@ -74,17 +85,27 @@ export default function Login() {
                 style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'12px 16px', fontSize:'15px', color:'#0a1628', outline:'none', boxSizing:'border-box'}}
               />
             </div>
-            <div>
-              <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'12px 16px', fontSize:'15px', color:'#0a1628', outline:'none', boxSizing:'border-box'}}
-              />
-            </div>
+            {!isForgotPassword && (
+              <div>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px'}}>
+                  <label style={{fontSize:'13px', fontWeight:'600', color:'#374151'}}>Password</label>
+                  {!isSignUp && (
+                    <button onClick={() => { setIsForgotPassword(true); setError(""); setMessage(""); }}
+                      style={{background:'none', border:'none', color:'#1a56db', fontWeight:'600', cursor:'pointer', fontSize:'13px'}}>
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                  style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'12px 16px', fontSize:'15px', color:'#0a1628', outline:'none', boxSizing:'border-box'}}
+                />
+              </div>
+            )}
           </div>
 
           {/* Error / success messages */}
@@ -102,17 +123,27 @@ export default function Login() {
           {/* Submit button */}
           <button onClick={handleSubmit} disabled={loading}
             style={{width:'100%', background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'14px', borderRadius:'12px', fontSize:'15px', fontWeight:'700', border:'none', cursor: loading ? 'not-allowed' : 'pointer', boxShadow:'0 4px 12px rgba(26,86,219,0.3)', opacity: loading ? 0.7 : 1, marginBottom:'16px'}}>
-            {loading ? "Please wait..." : isSignUp ? "Create account" : "Sign in"}
+            {loading ? "Please wait..." : isForgotPassword ? "Send reset link" : isSignUp ? "Create account" : "Sign in"}
           </button>
 
-          {/* Toggle sign up / sign in */}
-          <p style={{textAlign:'center', fontSize:'14px', color:'#6b7280'}}>
-            {isSignUp ? "Already have an account? " : "Don't have an account? "}
-            <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }}
-              style={{background:'none', border:'none', color:'#1a56db', fontWeight:'700', cursor:'pointer', fontSize:'14px'}}>
-              {isSignUp ? "Sign in" : "Sign up for free"}
-            </button>
-          </p>
+          {/* Toggle links */}
+          {isForgotPassword ? (
+            <p style={{textAlign:'center', fontSize:'14px', color:'#6b7280'}}>
+              Remember your password?{" "}
+              <button onClick={() => { setIsForgotPassword(false); setError(""); setMessage(""); }}
+                style={{background:'none', border:'none', color:'#1a56db', fontWeight:'700', cursor:'pointer', fontSize:'14px'}}>
+                Sign in
+              </button>
+            </p>
+          ) : (
+            <p style={{textAlign:'center', fontSize:'14px', color:'#6b7280'}}>
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }}
+                style={{background:'none', border:'none', color:'#1a56db', fontWeight:'700', cursor:'pointer', fontSize:'14px'}}>
+                {isSignUp ? "Sign in" : "Sign up for free"}
+              </button>
+            </p>
+          )}
 
         </div>
       </div>
