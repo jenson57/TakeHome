@@ -1,5 +1,21 @@
+"use client";
 import Calculator from "../Calculator";
 import Link from "next/link";
+import { supabase } from "../supabase";
+import { useRouter } from "next/navigation";
+
+function LogoutButton() {
+  const router = useRouter();
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+  return (
+    <button onClick={handleSignOut} style={{background:'#f3f4f6', border:'none', borderRadius:'10px', padding:'8px 16px', fontSize:'14px', color:'#6b7280', cursor:'pointer', fontWeight:'600'}}>
+      Sign out
+    </button>
+  );
+}
 
 export default function CalculatorPage() {
   return (
@@ -12,23 +28,26 @@ export default function CalculatorPage() {
             </div>
             <span style={{fontWeight:'800', color:'#0a1628', fontSize:'18px', letterSpacing:'-0.3px'}}>Takehome</span>
           </Link>
-          <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
-            {[
-              { href:'/', label:'Home', icon:'🏠' },
-              { href:'/calculator', label:'Calculator', icon:'💷', active:true },
-              { href:'/dashboard', label:'Dashboard', icon:'📊' },
-            ].map(tab => (
-              <Link key={tab.href} href={tab.href} style={{
-                display:'flex', alignItems:'center', gap:'6px',
-                padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500',
-                color: tab.active ? '#1a56db' : '#6b7280',
-                background: tab.active ? 'white' : 'transparent',
-                textDecoration:'none',
-                boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none',
-              }}>
-                <span>{tab.icon}</span>{tab.label}
-              </Link>
-            ))}
+          <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+            <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
+              {[
+                { href:'/', label:'Home', icon:'🏠' },
+                { href:'/calculator', label:'Calculator', icon:'💷', active:true },
+                { href:'/dashboard', label:'Dashboard', icon:'📊' },
+              ].map(tab => (
+                <Link key={tab.href} href={tab.href} style={{
+                  display:'flex', alignItems:'center', gap:'6px',
+                  padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500',
+                  color: tab.active ? '#1a56db' : '#6b7280',
+                  background: tab.active ? 'white' : 'transparent',
+                  textDecoration:'none',
+                  boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none',
+                }}>
+                  <span>{tab.icon}</span>{tab.label}
+                </Link>
+              ))}
+            </div>
+            <LogoutButton />
           </div>
         </div>
       </nav>

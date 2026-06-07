@@ -1,5 +1,20 @@
 "use client";
 import Link from "next/link";
+import { supabase } from "./supabase";
+import { useRouter } from "next/navigation";
+
+function LogoutButton() {
+  const router = useRouter();
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+  return (
+    <button onClick={handleSignOut} style={{background:'#f3f4f6', border:'none', borderRadius:'10px', padding:'8px 16px', fontSize:'14px', color:'#6b7280', cursor:'pointer', fontWeight:'600'}}>
+      Sign out
+    </button>
+  );
+}
 
 export default function Home() {
   return (
@@ -47,6 +62,7 @@ export default function Home() {
             <Link href="/calculator" style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'10px 22px', borderRadius:'8px', fontSize:'14px', fontWeight:'600', textDecoration:'none', boxShadow:'0 2px 8px rgba(26,86,219,0.3)'}}>
               Get started free
             </Link>
+            <LogoutButton />
           </div>
         </div>
       </nav>
