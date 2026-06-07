@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { supabase } from "./supabase";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 function LogoutButton() {
   const router = useRouter();
@@ -16,7 +17,16 @@ function LogoutButton() {
   );
 }
 
+const TABS = [
+  { href:'/', label:'Home', icon:'🏠', active:true },
+  { href:'/calculator', label:'Calculator', icon:'💷' },
+  { href:'/dashboard', label:'Dashboard', icon:'📊' },
+  { href:'/settings', label:'Settings', icon:'⚙️' },
+];
+
 export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <main className="min-h-screen bg-white">
       <style>{`
@@ -26,13 +36,20 @@ export default function Home() {
           .testimonial-grid { grid-template-columns: 1fr !important; }
           .preview-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .hero-title { font-size: 36px !important; letter-spacing: -0.5px !important; }
-          .nav-buttons { display: none !important; }
           .hero-section { padding-top: 48px !important; padding-bottom: 48px !important; }
+          .desktop-nav { display: none !important; }
+          .mobile-menu-btn { display: flex !important; }
+          .mobile-bottom-nav { display: flex !important; }
+        }
+        @media (min-width: 641px) {
+          .mobile-menu-btn { display: none !important; }
+          .mobile-menu { display: none !important; }
+          .mobile-bottom-nav { display: none !important; }
         }
       `}</style>
 
       {/* Nav */}
-      <nav style={{borderBottom: '1px solid #e8f0fe'}} className="px-6 py-4 bg-white sticky top-0 z-50">
+      <nav style={{borderBottom: '1px solid #e8f0fe'}} className="px-4 py-4 bg-white sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div style={{background: 'linear-gradient(135deg, #1a56db, #0e3fa8)'}} className="w-8 h-8 rounded-lg flex items-center justify-center">
@@ -40,22 +57,12 @@ export default function Home() {
             </div>
             <span className="font-bold text-black text-lg tracking-tight">Takehome</span>
           </div>
-          <div className="nav-buttons" style={{display:'flex', alignItems:'center', gap:'12px'}}>
+
+          {/* Desktop nav */}
+          <div className="desktop-nav" style={{display:'flex', alignItems:'center', gap:'12px'}}>
             <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
-              {[
-                { href:'/', label:'Home', icon:'🏠', active:true },
-                { href:'/calculator', label:'Calculator', icon:'💷' },
-                { href:'/dashboard', label:'Dashboard', icon:'📊' },
-                { href:'/settings', label:'Settings', icon:'⚙️' },
-              ].map(tab => (
-                <Link key={tab.href} href={tab.href} style={{
-                  display:'flex', alignItems:'center', gap:'6px',
-                  padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500',
-                  color: tab.active ? '#1a56db' : '#6b7280',
-                  background: tab.active ? 'white' : 'transparent',
-                  textDecoration:'none',
-                  boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none',
-                }}>
+              {TABS.map(tab => (
+                <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
                   <span>{tab.icon}</span>{tab.label}
                 </Link>
               ))}
@@ -65,7 +72,30 @@ export default function Home() {
             </Link>
             <LogoutButton />
           </div>
+
+          {/* Mobile hamburger */}
+          <button className="mobile-menu-btn" onClick={() => setMenuOpen(!menuOpen)}
+            style={{background:'none', border:'none', cursor:'pointer', flexDirection:'column', gap:'5px', padding:'4px', display:'none'}}>
+            <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
+            <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
+            <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
+          </button>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <div className="mobile-menu" style={{borderTop:'1px solid #e8f0fe', marginTop:'12px', paddingTop:'12px'}}>
+            {TABS.map(tab => (
+              <Link key={tab.href} href={tab.href} onClick={() => setMenuOpen(false)}
+                style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px 16px', borderRadius:'10px', fontSize:'15px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#0a1628', background: tab.active ? '#f0f5ff' : 'transparent', textDecoration:'none', marginBottom:'4px'}}>
+                <span>{tab.icon}</span>{tab.label}
+              </Link>
+            ))}
+            <div style={{borderTop:'1px solid #e8f0fe', marginTop:'8px', paddingTop:'8px'}}>
+              <LogoutButton />
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}
@@ -208,7 +238,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer style={{borderTop: '1px solid #e8f0fe', padding: '32px 24px'}}>
+      <footer style={{borderTop: '1px solid #e8f0fe', padding: '32px 24px 100px'}}>
         <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <div style={{background: 'linear-gradient(135deg, #1a56db, #0e3fa8)'}} className="w-7 h-7 rounded-lg flex items-center justify-center">
@@ -219,6 +249,16 @@ export default function Home() {
           <p style={{fontSize: '13px', color: '#a0aec0'}}>© 2026 Takehome · Built for UK residents · Tax calculations are estimates only</p>
         </div>
       </footer>
+
+      {/* Mobile bottom tabs */}
+      <div className="mobile-bottom-nav" style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'none', padding:'8px 0 20px', zIndex:100}}>
+        {TABS.map(tab => (
+          <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
+            <span style={{fontSize:'22px'}}>{tab.icon}</span>
+            <span style={{fontSize:'11px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#9ca3af'}}>{tab.label}</span>
+          </Link>
+        ))}
+      </div>
 
     </main>
   );

@@ -231,7 +231,7 @@ export default function Dashboard() {
         )}
       </nav>
 
-      <div className="max-w-6xl mx-auto px-4 py-10" style={{paddingBottom:'100px'}}>
+      <div className="max-w-6xl mx-auto px-4 py-10" style={{paddingBottom:'160px'}}>
 
         {/* Alert banners */}
         {alertSettings?.spending_alert && totalSpent > netPay && netPay > 0 && (
