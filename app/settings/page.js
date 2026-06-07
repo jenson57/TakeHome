@@ -115,6 +115,9 @@ export default function Settings() {
           .mobile-menu{display:none!important}
           .mobile-bottom-nav{display:none!important}
         }
+        * { box-sizing: border-box; }
+        body { overflow-x: hidden; }
+        main { overflow-x: hidden; max-width: 100vw; }
       `}</style>
 
       {/* Nav */}
@@ -126,7 +129,7 @@ export default function Settings() {
             </div>
             <span style={{fontWeight:'800', color:'#0a1628', fontSize:'18px', letterSpacing:'-0.3px'}}>Takehome</span>
           </Link>
-          <div className="desktop-nav" style={{display:'flex', alignItems:'center', gap:'12px'}}>
+          <div className="desktop-nav" style={{display:'flex', alignItems:'center', gap:'12px', flexShrink:0}}>
             <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
               {TABS.map(tab => (
                 <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
