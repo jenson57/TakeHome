@@ -39,7 +39,7 @@ function fmt(n) {
 
 export default function Calculator() {
   const [incomes, setIncomes] = useState([
-    { id: 0, label: "Primary income", amount: 35000, freq: 12, hoursPerWeek: 40 }
+    { id: 0, label: "Primary income", amount: 0, freq: "", hoursPerWeek: 40 }
   ]);
   const [displayFreq, setDisplayFreq] = useState(12);
   const [categories, setCategories] = useState(
@@ -168,7 +168,8 @@ export default function Calculator() {
                     const val = e.target.value === "hourly" ? "hourly" : parseInt(e.target.value);
                     updateIncome(inc.id, "freq", val);
                   }} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white text-black">
-                    <option value={1}>Yearly salary</option>
+                    <option value="" disabled>Select pay type</option>
+<option value={1}>Yearly salary</option>
 <option value={12}>Monthly salary</option>
 <option value={52}>Weekly salary</option>
 <option value={26}>Fortnightly salary</option>

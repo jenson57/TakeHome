@@ -31,7 +31,7 @@ function fmt(n) {
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
-  const [netPay, setNetPay] = useState(2290);
+  const [netPay, setNetPay] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [form, setForm] = useState({ date: "", description: "", amount: "", category: "" });
   const [editingId, setEditingId] = useState(null);
