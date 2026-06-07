@@ -36,15 +36,13 @@ export default function Settings() {
   const [passwordError, setPasswordError] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-
-  // Alert settings
   const [spendingAlert, setSpendingAlert] = useState(true);
   const [savingsAlert, setSavingsAlert] = useState(true);
   const [savingsGoal, setSavingsGoal] = useState(0);
   const [savingsCategory, setSavingsCategory] = useState("Savings");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertLoading, setAlertLoading] = useState(false);
-
+  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,12 +51,7 @@ export default function Settings() {
       if (!user) { router.push("/login"); return; }
       setUser(user);
       setEmail(user.email);
-
-      const { data: alerts } = await supabase
-        .from("alert_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+      const { data: alerts } = await supabase.from("alert_settings").select("*").eq("user_id", user.id).single();
       if (alerts) {
         setSpendingAlert(alerts.spending_alert);
         setSavingsAlert(alerts.savings_alert);
@@ -89,11 +82,7 @@ export default function Settings() {
     if (newPassword.length < 6) { setPasswordError("Password must be at least 6 characters"); setPasswordLoading(false); return; }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) setPasswordError(error.message);
-    else {
-      setPasswordMessage("Password updated successfully!");
-      setNewPassword("");
-      setConfirmPassword("");
-    }
+    else { setPasswordMessage("Password updated successfully!"); setNewPassword(""); setConfirmPassword(""); }
     setPasswordLoading(false);
   };
 
@@ -115,7 +104,21 @@ export default function Settings() {
 
   return (
     <main className="min-h-screen" style={{background:'#f7f9ff'}}>
-      <nav style={{borderBottom:'1px solid #e8f0fe', background:'white'}} className="px-6 py-4 sticky top-0 z-50">
+      <style>{`
+        @media(max-width:640px){
+          .desktop-nav{display:none!important}
+          .mobile-menu-btn{display:flex!important}
+          .mobile-bottom-nav{display:flex!important}
+        }
+        @media(min-width:641px){
+          .mobile-menu-btn{display:none!important}
+          .mobile-menu{display:none!important}
+          .mobile-bottom-nav{display:none!important}
+        }
+      `}</style>
+
+      {/* Nav */}
+      <nav style={{borderBottom:'1px solid #e8f0fe', background:'white'}} className="px-4 py-4 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2" style={{textDecoration:'none'}}>
             <div style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', width:'32px', height:'32px', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center'}}>
@@ -123,7 +126,7 @@ export default function Settings() {
             </div>
             <span style={{fontWeight:'800', color:'#0a1628', fontSize:'18px', letterSpacing:'-0.3px'}}>Takehome</span>
           </Link>
-          <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+          <div className="desktop-nav" style={{display:'flex', alignItems:'center', gap:'12px'}}>
             <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
               {TABS.map(tab => (
                 <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
@@ -133,10 +136,29 @@ export default function Settings() {
             </div>
             <LogoutButton />
           </div>
+          <button className="mobile-menu-btn" onClick={() => setMenuOpen(!menuOpen)}
+            style={{background:'none', border:'none', cursor:'pointer', flexDirection:'column', gap:'5px', padding:'4px', display:'none'}}>
+            <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
+            <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
+            <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
+          </button>
         </div>
+        {menuOpen && (
+          <div className="mobile-menu" style={{borderTop:'1px solid #e8f0fe', marginTop:'12px', paddingTop:'12px'}}>
+            {TABS.map(tab => (
+              <Link key={tab.href} href={tab.href} onClick={() => setMenuOpen(false)}
+                style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px 16px', borderRadius:'10px', fontSize:'15px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#0a1628', background: tab.active ? '#f0f5ff' : 'transparent', textDecoration:'none', marginBottom:'4px'}}>
+                <span>{tab.icon}</span>{tab.label}
+              </Link>
+            ))}
+            <div style={{borderTop:'1px solid #e8f0fe', marginTop:'8px', paddingTop:'8px'}}>
+              <LogoutButton />
+            </div>
+          </div>
+        )}
       </nav>
 
-      <div className="max-w-2xl mx-auto px-4 py-10">
+      <div className="max-w-2xl mx-auto px-4 py-10" style={{paddingBottom:'160px'}}>
 
         {/* Header */}
         <div style={{marginBottom:'32px'}}>
@@ -205,10 +227,7 @@ export default function Settings() {
           <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Alerts</p>
           <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'6px'}}>Notification preferences</h2>
           <p style={{fontSize:'14px', color:'#6b7280', marginBottom:'24px'}}>Choose when to be alerted about your spending and savings</p>
-
           <div style={{display:'flex', flexDirection:'column', gap:'20px'}}>
-
-            {/* Spending alert toggle */}
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px', background:'#f7f9ff', borderRadius:'12px', border:'1px solid #e8f0fe'}}>
               <div>
                 <p style={{fontSize:'15px', fontWeight:'700', color:'#0a1628', marginBottom:'4px'}}>⚠️ Overspending alert</p>
@@ -218,8 +237,6 @@ export default function Settings() {
                 <div style={{position:'absolute', top:'3px', left: spendingAlert ? '25px' : '3px', width:'20px', height:'20px', borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}></div>
               </div>
             </div>
-
-            {/* Savings alert toggle */}
             <div style={{padding:'16px', background:'#f7f9ff', borderRadius:'12px', border:'1px solid #e8f0fe'}}>
               <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: savingsAlert ? '16px' : '0'}}>
                 <div>
@@ -234,26 +251,17 @@ export default function Settings() {
                 <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
                   <div>
                     <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>Monthly savings goal (£)</label>
-                    <input type="number" placeholder="e.g. 300" value={savingsGoal} onChange={e => setSavingsGoal(parseFloat(e.target.value) || 0)}
-                      style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'10px 14px', fontSize:'14px', color:'#0a1628', outline:'none', boxSizing:'border-box', background:'white'}} />
+                    <input type="number" placeholder="e.g. 300" value={savingsGoal} onChange={e => setSavingsGoal(parseFloat(e.target.value) || 0)} style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'10px 14px', fontSize:'14px', color:'#0a1628', outline:'none', boxSizing:'border-box', background:'white'}} />
                   </div>
                   <div>
                     <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>Savings category to track</label>
-                    <input type="text" placeholder="e.g. Savings" value={savingsCategory} onChange={e => setSavingsCategory(e.target.value)}
-                      style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'10px 14px', fontSize:'14px', color:'#0a1628', outline:'none', boxSizing:'border-box', background:'white'}} />
+                    <input type="text" placeholder="e.g. Savings" value={savingsCategory} onChange={e => setSavingsCategory(e.target.value)} style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'10px 14px', fontSize:'14px', color:'#0a1628', outline:'none', boxSizing:'border-box', background:'white'}} />
                   </div>
                 </div>
               )}
             </div>
-
           </div>
-
-          {alertMessage && (
-            <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:'10px', padding:'12px 16px', marginTop:'16px'}}>
-              <p style={{fontSize:'14px', color:'#16a34a', fontWeight:'500'}}>{alertMessage}</p>
-            </div>
-          )}
-
+          {alertMessage && <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:'10px', padding:'12px 16px', marginTop:'16px'}}><p style={{fontSize:'14px', color:'#16a34a', fontWeight:'500'}}>{alertMessage}</p></div>}
           <button onClick={handleAlertSave} disabled={alertLoading} style={{marginTop:'20px', background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'12px 28px', borderRadius:'10px', fontSize:'14px', fontWeight:'700', border:'none', cursor: alertLoading ? 'not-allowed' : 'pointer', opacity: alertLoading ? 0.7 : 1, boxShadow:'0 2px 8px rgba(26,86,219,0.25)'}}>
             {alertLoading ? "Saving..." : "Save alert settings"}
           </button>
@@ -271,6 +279,17 @@ export default function Settings() {
         </div>
 
       </div>
+
+      {/* Mobile bottom tabs */}
+      <div className="mobile-bottom-nav" style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'none', padding:'8px 0 20px', zIndex:100}}>
+        {TABS.map(tab => (
+          <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
+            <span style={{fontSize:'22px'}}>{tab.icon}</span>
+            <span style={{fontSize:'11px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#9ca3af'}}>{tab.label}</span>
+          </Link>
+        ))}
+      </div>
+
     </main>
   );
 }
