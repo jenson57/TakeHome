@@ -46,6 +46,7 @@ export default function Home() {
                 { href:'/', label:'Home', icon:'🏠', active:true },
                 { href:'/calculator', label:'Calculator', icon:'💷' },
                 { href:'/dashboard', label:'Dashboard', icon:'📊' },
+                { href:'/settings', label:'Settings', icon:'⚙️' },
               ].map(tab => (
                 <Link key={tab.href} href={tab.href} style={{
                   display:'flex', alignItems:'center', gap:'6px',

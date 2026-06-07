@@ -34,6 +34,7 @@ export default function CalculatorPage() {
                 { href:'/', label:'Home', icon:'🏠' },
                 { href:'/calculator', label:'Calculator', icon:'💷', active:true },
                 { href:'/dashboard', label:'Dashboard', icon:'📊' },
+                { href:'/settings', label:'Settings', icon:'⚙️' },
               ].map(tab => (
                 <Link key={tab.href} href={tab.href} style={{
                   display:'flex', alignItems:'center', gap:'6px',
