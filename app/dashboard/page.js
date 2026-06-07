@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [netPay, setNetPay] = useState(0);
   const [transactions, setTransactions] = useState([]);
+  const [alertSettings, setAlertSettings] = useState(null);
   const [form, setForm] = useState({ date: "", description: "", amount: "", category: "" });
   const [editingId, setEditingId] = useState(null);
   const [filterCat, setFilterCat] = useState("All");
@@ -40,35 +41,26 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Load user and their data
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
       setUser(user);
 
-      // Load transactions
-      const { data: txns } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("date", { ascending: false });
+      const { data: txns } = await supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false });
       if (txns) setTransactions(txns);
 
-      // Load budget settings
-      const { data: settings } = await supabase
-        .from("budget_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+      const { data: settings } = await supabase.from("budget_settings").select("*").eq("user_id", user.id).single();
       if (settings) setNetPay(settings.net_pay);
+
+      const { data: alerts } = await supabase.from("alert_settings").select("*").eq("user_id", user.id).single();
+      if (alerts) setAlertSettings(alerts);
 
       setLoading(false);
     };
     init();
   }, []);
 
-  // Save net pay to Supabase when it changes
   useEffect(() => {
     if (!user) return;
     supabase.from("budget_settings").upsert({ user_id: user.id, net_pay: netPay }, { onConflict: "user_id" });
@@ -98,22 +90,12 @@ export default function Dashboard() {
   const addTransaction = async () => {
     if (!form.description || !form.amount || !form.date) return;
     const category = form.category || categorise(form.description);
-
     if (editingId !== null) {
-      const { data } = await supabase
-        .from("transactions")
-        .update({ ...form, amount: parseFloat(form.amount), category })
-        .eq("id", editingId)
-        .select()
-        .single();
+      const { data } = await supabase.from("transactions").update({ ...form, amount: parseFloat(form.amount), category }).eq("id", editingId).select().single();
       if (data) setTransactions(prev => prev.map(t => t.id === editingId ? data : t));
       setEditingId(null);
     } else {
-      const { data } = await supabase
-        .from("transactions")
-        .insert({ ...form, amount: parseFloat(form.amount), category, user_id: user.id })
-        .select()
-        .single();
+      const { data } = await supabase.from("transactions").insert({ ...form, amount: parseFloat(form.amount), category, user_id: user.id }).select().single();
       if (data) setTransactions(prev => [data, ...prev]);
     }
     setForm({ date: "", description: "", amount: "", category: "" });
@@ -153,6 +135,8 @@ export default function Dashboard() {
     });
   })();
 
+  const savingsTotal = alertSettings ? transactions.filter(t => t.category === alertSettings.savings_category).reduce((s, t) => s + parseFloat(t.amount), 0) : 0;
+
   if (loading) return (
     <main className="min-h-screen" style={{background:'#f7f9ff', display:'flex', alignItems:'center', justifyContent:'center'}}>
       <div style={{textAlign:'center'}}>
@@ -181,9 +165,9 @@ export default function Dashboard() {
             <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
               {[
                 { href:'/', label:'Home', icon:'🏠' },
-              { href:'/calculator', label:'Calculator', icon:'💷' },
-              { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-              { href:'/settings', label:'Settings', icon:'⚙️' },
+                { href:'/calculator', label:'Calculator', icon:'💷' },
+                { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+                { href:'/settings', label:'Settings', icon:'⚙️' },
               ].map(tab => (
                 <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
                   <span>{tab.icon}</span>{tab.label}
@@ -198,6 +182,36 @@ export default function Dashboard() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-10">
+
+        {/* Alert banners */}
+        {alertSettings?.spending_alert && totalSpent > netPay && netPay > 0 && (
+          <div style={{background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'14px', padding:'16px 20px', marginBottom:'24px', display:'flex', alignItems:'center', gap:'12px'}}>
+            <span style={{fontSize:'24px'}}>⚠️</span>
+            <div>
+              <p style={{fontSize:'15px', fontWeight:'700', color:'#dc2626', marginBottom:'2px'}}>Overspending alert</p>
+              <p style={{fontSize:'13px', color:'#ef4444'}}>Your spending of {fmt(totalSpent)} exceeds your take-home pay of {fmt(netPay)} this month.</p>
+            </div>
+          </div>
+        )}
+        {alertSettings?.savings_alert && alertSettings?.savings_goal > 0 && (
+          savingsTotal < alertSettings.savings_goal ? (
+            <div style={{background:'#fffbeb', border:'1px solid #fcd34d', borderRadius:'14px', padding:'16px 20px', marginBottom:'24px', display:'flex', alignItems:'center', gap:'12px'}}>
+              <span style={{fontSize:'24px'}}>🎯</span>
+              <div>
+                <p style={{fontSize:'15px', fontWeight:'700', color:'#d97706', marginBottom:'2px'}}>Savings goal not met</p>
+                <p style={{fontSize:'13px', color:'#f59e0b'}}>You've saved {fmt(savingsTotal)} towards your {fmt(alertSettings.savings_goal)} monthly goal. You need {fmt(alertSettings.savings_goal - savingsTotal)} more.</p>
+              </div>
+            </div>
+          ) : (
+            <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:'14px', padding:'16px 20px', marginBottom:'24px', display:'flex', alignItems:'center', gap:'12px'}}>
+              <span style={{fontSize:'24px'}}>✅</span>
+              <div>
+                <p style={{fontSize:'15px', fontWeight:'700', color:'#16a34a', marginBottom:'2px'}}>Savings goal met!</p>
+                <p style={{fontSize:'13px', color:'#22c55e'}}>You've saved {fmt(savingsTotal)} this month, hitting your {fmt(alertSettings.savings_goal)} goal!</p>
+              </div>
+            </div>
+          )
+        )}
 
         {/* Page header */}
         <div className="header-row" style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'32px', flexWrap:'wrap', gap:'16px'}}>
@@ -279,7 +293,7 @@ export default function Dashboard() {
             <span style={{fontSize:'28px', fontWeight:'800', color:barColor, letterSpacing:'-0.5px'}}>{spentPct}%</span>
           </div>
           <div style={{height:'12px', background:'#f3f4f6', borderRadius:'999px', overflow:'hidden'}}>
-            <div style={{height:'100%', width:Math.min(spentPct, 100)+'%', background: spentPct >= 101 ? '#dc2626' : spentPct >= 76 ? '#f59e0b' : 'linear-gradient(90deg, #1a56db, #4f83f7)', borderRadius:'999px', transition:'width 0.3s'}}></div>
+            <div style={{height:'100%', width:Math.min(spentPct, 100)+'%', backgroundColor: totalSpent > netPay ? '#dc2626' : spentPct >= 76 ? '#f59e0b' : '#4ade80', borderRadius:'999px', transition:'width 0.3s'}}></div>
           </div>
           <div style={{display:'flex', justifyContent:'space-between', marginTop:'8px'}}>
             <span style={{fontSize:'12px', color:'#9ca3af'}}>£0</span>
