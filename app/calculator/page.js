@@ -92,6 +92,21 @@ export default function CalculatorPage() {
         <p className="text-gray-500 mb-6 text-sm">Based on 2024/25 UK tax rates</p>
         <Calculator />
       </div>
+      {/* Mobile bottom tabs */}
+      <div style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'flex', padding:'8px 0 20px', zIndex:100}} className="mobile-bottom-nav">
+        <style>{`.mobile-bottom-nav{display:none!important} @media(max-width:640px){.mobile-bottom-nav{display:flex!important}}`}</style>
+        {[
+          { href:'/', label:'Home', icon:'🏠' },
+          { href:'/calculator', label:'Calculator', icon:'💷', active:true },
+          { href:'/dashboard', label:'Dashboard', icon:'📊' },
+          { href:'/settings', label:'Settings', icon:'⚙️' },
+        ].map(tab => (
+          <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
+            <span style={{fontSize:'22px'}}>{tab.icon}</span>
+            <span style={{fontSize:'11px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#9ca3af'}}>{tab.label}</span>
+          </Link>
+        ))}
+      </div>
     </main>
   );
 }
