@@ -97,7 +97,7 @@ export default function Calculator() {
   };
 
   const addIncome = () => {
-    setIncomes(prev => [...prev, { id: Date.now(), label: `Income ${prev.length + 1}`, amount: 0, freq: 12, hoursPerWeek: 40 }]);
+    setIncomes(prev => [...prev, { id: Date.now(), label: `Income ${prev.length + 1}`, amount: 0, freq: "", hoursPerWeek: 40 }]);
   };
 
   const removeIncome = (id) => {
@@ -128,8 +128,6 @@ export default function Calculator() {
     return "month";
   };
 
-  
-
   return (
     <div className="space-y-4">
 
@@ -149,7 +147,7 @@ export default function Calculator() {
         </div>
 
         <div className="space-y-4">
-          {incomes.map((inc, idx) => (
+          {incomes.map((inc) => (
             <div key={inc.id} className="bg-gray-50 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <input
@@ -161,19 +159,19 @@ export default function Calculator() {
                   <button onClick={() => removeIncome(inc.id)} className="text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-black mb-1 block">Pay type</label>
                   <select value={inc.freq} onChange={e => {
-                    const val = e.target.value === "hourly" ? "hourly" : parseInt(e.target.value);
+                    const val = e.target.value === "hourly" ? "hourly" : e.target.value === "" ? "" : parseInt(e.target.value);
                     updateIncome(inc.id, "freq", val);
                   }} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white text-black">
                     <option value="" disabled>Select pay type</option>
-<option value={1}>Yearly salary</option>
-<option value={12}>Monthly salary</option>
-<option value={52}>Weekly salary</option>
-<option value={26}>Fortnightly salary</option>
-<option value="hourly">Hourly rate</option>
+                    <option value={1}>Yearly salary</option>
+                    <option value={12}>Monthly salary</option>
+                    <option value={52}>Weekly salary</option>
+                    <option value={26}>Fortnightly salary</option>
+                    <option value="hourly">Hourly rate</option>
                   </select>
                 </div>
                 <div>
@@ -210,7 +208,7 @@ export default function Calculator() {
 
         <button onClick={addIncome} className="mt-4 text-sm text-blue-600 hover:text-blue-800">+ Add another income</button>
 
-        <div className="grid grid-cols-4 gap-3 mt-4">
+        <div className="grid grid-cols-2 gap-3 mt-4">
           {[
             ["Gross pay", fmt(periodGross), "text-black"],
             ["Income tax", "-" + fmt(periodTax), "text-black"],
@@ -278,8 +276,9 @@ export default function Calculator() {
             </p>
           </div>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-<div style={{ height: '100%', borderRadius: '999px', transition: 'width 0.3s', width: total > periodNet ? "100%" : pct + "%", backgroundColor: total > periodNet ? '#dc2626' : pct >= 76 ? '#facc15' : '#4ade80' }}></div>        </div>
+        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden" style={{marginBottom:'80px'}}>
+          <div style={{height:'100%', borderRadius:'999px', transition:'width 0.3s', width: pct >= 101 ? "100%" : pct + "%", backgroundColor: total > periodNet ? '#dc2626' : pct >= 76 ? '#f59e0b' : '#4ade80'}}></div>
+        </div>
       </div>
 
     </div>
