@@ -98,6 +98,7 @@ export default function Settings() {
   };
 
   const handleAlertSave = async () => {
+    if (!user) return;
     setAlertLoading(true);
     setAlertMessage("");
     const { error } = await supabase.from("alert_settings").upsert({
