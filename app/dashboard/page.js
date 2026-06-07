@@ -37,6 +37,9 @@ export default function Dashboard() {
   const [form, setForm] = useState({ date: "", description: "", amount: "", category: "" });
   const [editingId, setEditingId] = useState(null);
   const [filterCat, setFilterCat] = useState("All");
+  const [filterMonth, setFilterMonth] = useState("All");
+  const [filterSort, setFilterSort] = useState("date-desc");
+  const [filterSearch, setFilterSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -114,8 +117,21 @@ export default function Dashboard() {
     setShowForm(true);
   };
 
-  const filtered = filterCat === "All" ? transactions : transactions.filter(t => t.category === filterCat);
-  const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const months = [...new Set(transactions.map(t => t.date.slice(0, 7)))].sort().reverse();
+
+  const filtered = transactions
+    .filter(t => filterCat === "All" || t.category === filterCat)
+    .filter(t => filterMonth === "All" || t.date.startsWith(filterMonth))
+    .filter(t => filterSearch === "" || t.description.toLowerCase().includes(filterSearch.toLowerCase()));
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (filterSort === "date-desc") return new Date(b.date) - new Date(a.date);
+    if (filterSort === "date-asc") return new Date(a.date) - new Date(b.date);
+    if (filterSort === "amount-desc") return parseFloat(b.amount) - parseFloat(a.amount);
+    if (filterSort === "amount-asc") return parseFloat(a.amount) - parseFloat(b.amount);
+    if (filterSort === "name-asc") return a.description.localeCompare(b.description);
+    return 0;
+  });
 
   const pieSlices = (() => {
     if (categoryTotals.length === 0) return [];
@@ -146,40 +162,30 @@ export default function Dashboard() {
         </div>
         <p style={{color:'#6b7280', fontSize:'15px', fontWeight:'500'}}>Loading your dashboard...</p>
       </div>
-      {/* Mobile bottom tabs */}
-      <div style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'flex', padding:'8px 0 20px', zIndex:100}} className="mobile-bottom-nav">
-        <style>{`.mobile-bottom-nav{display:none!important} @media(max-width:640px){.mobile-bottom-nav{display:flex!important}}`}</style>
-        {[
-          { href:'/', label:'Home', icon:'🏠' },
-          { href:'/calculator', label:'Calculator', icon:'💷' },
-          { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-          { href:'/settings', label:'Settings', icon:'⚙️' },
-        ].map(tab => (
-          <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
-            <span style={{fontSize:'22px'}}>{tab.icon}</span>
-            <span style={{fontSize:'11px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#9ca3af'}}>{tab.label}</span>
-          </Link>
-        ))}
-      </div>
     </main>
   );
 
   return (
     <main className="min-h-screen" style={{background: '#f7f9ff'}}>
-      <style>{`@media(max-width:640px){.dash-grid{grid-template-columns:1fr!important}.summary-grid{grid-template-columns:1fr 1fr!important}.header-row{flex-direction:column!important;align-items:flex-start!important}.form-grid{grid-template-columns:1fr!important}}`}</style>
+      <style>{`
+        @media(max-width:640px){
+          .dash-grid{grid-template-columns:1fr!important}
+          .summary-grid{grid-template-columns:1fr 1fr!important}
+          .header-row{flex-direction:column!important;align-items:flex-start!important}
+          .form-grid{grid-template-columns:1fr!important}
+          .desktop-nav{display:none!important}
+          .mobile-menu-btn{display:flex!important}
+          .mobile-bottom-nav{display:flex!important}
+        }
+        @media(min-width:641px){
+          .mobile-menu-btn{display:none!important}
+          .mobile-menu{display:none!important}
+          .mobile-bottom-nav{display:none!important}
+        }
+      `}</style>
 
       {/* Nav */}
       <nav style={{borderBottom:'1px solid #e8f0fe', background:'white'}} className="px-4 py-4 sticky top-0 z-50">
-        <style>{`
-          @media(max-width:640px){
-            .desktop-nav{display:none!important}
-            .mobile-menu-btn{display:flex!important}
-          }
-          @media(min-width:641px){
-            .mobile-menu-btn{display:none!important}
-            .mobile-menu{display:none!important}
-          }
-        `}</style>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2" style={{textDecoration:'none'}}>
             <div style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', width:'32px', height:'32px', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center'}}>
@@ -205,7 +211,7 @@ export default function Dashboard() {
             </button>
           </div>
           <button className="mobile-menu-btn" onClick={() => setMenuOpen(!menuOpen)}
-            style={{background:'none', border:'none', cursor:'pointer', flexDirection:'column', gap:'5px', padding:'4px'}}>
+            style={{background:'none', border:'none', cursor:'pointer', flexDirection:'column', gap:'5px', padding:'4px', display:'none'}}>
             <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
             <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
             <div style={{width:'22px', height:'2px', background:'#0a1628', borderRadius:'2px'}}></div>
@@ -408,22 +414,42 @@ export default function Dashboard() {
 
         {/* Transactions */}
         <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px', flexWrap:'wrap', gap:'12px'}}>
-            <div>
-              <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>History</p>
-              <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628'}}>Transactions</h2>
+          <div style={{marginBottom:'20px'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexWrap:'wrap', gap:'12px'}}>
+              <div>
+                <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>History</p>
+                <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628'}}>Transactions</h2>
+              </div>
+              <p style={{fontSize:'13px', color:'#9ca3af'}}>{sorted.length} transaction{sorted.length !== 1 ? 's' : ''}</p>
             </div>
-            <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-              style={{border:'1px solid #e8f0fe', borderRadius:'10px', padding:'8px 14px', fontSize:'13px', color:'#0a1628', background:'white', fontWeight:'500', outline:'none'}}>
-              <option value="All">All categories</option>
-              {CATEGORIES.map(c => <option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
-            </select>
+            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:'10px'}}>
+              <input type="text" placeholder="Search by name..." value={filterSearch} onChange={e => setFilterSearch(e.target.value)}
+                style={{border:'1px solid #e8f0fe', borderRadius:'10px', padding:'8px 14px', fontSize:'13px', color:'#0a1628', background:'white', outline:'none'}} />
+              <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
+                style={{border:'1px solid #e8f0fe', borderRadius:'10px', padding:'8px 14px', fontSize:'13px', color:'#0a1628', background:'white', outline:'none'}}>
+                <option value="All">All months</option>
+                {months.map(m => <option key={m} value={m}>{new Date(m + '-01').toLocaleDateString('en-GB', {month:'long', year:'numeric'})}</option>)}
+              </select>
+              <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
+                style={{border:'1px solid #e8f0fe', borderRadius:'10px', padding:'8px 14px', fontSize:'13px', color:'#0a1628', background:'white', outline:'none'}}>
+                <option value="All">All categories</option>
+                {CATEGORIES.map(c => <option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
+              </select>
+              <select value={filterSort} onChange={e => setFilterSort(e.target.value)}
+                style={{border:'1px solid #e8f0fe', borderRadius:'10px', padding:'8px 14px', fontSize:'13px', color:'#0a1628', background:'white', outline:'none'}}>
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+                <option value="amount-desc">Highest amount</option>
+                <option value="amount-asc">Lowest amount</option>
+                <option value="name-asc">Name A-Z</option>
+              </select>
+            </div>
           </div>
           {sorted.length === 0
             ? <div style={{textAlign:'center', padding:'40px 0'}}>
                 <p style={{fontSize:'32px', marginBottom:'12px'}}>🧾</p>
-                <p style={{color:'#9ca3af', fontSize:'15px', fontWeight:'500'}}>No transactions yet</p>
-                <p style={{color:'#c4c9d4', fontSize:'13px', marginTop:'4px'}}>Click "Add transaction" to get started</p>
+                <p style={{color:'#9ca3af', fontSize:'15px', fontWeight:'500'}}>No transactions found</p>
+                <p style={{color:'#c4c9d4', fontSize:'13px', marginTop:'4px'}}>Try adjusting your filters or add a transaction</p>
               </div>
             : <div style={{display:'flex', flexDirection:'column', gap:'4px'}}>
                 {sorted.map(t => {
@@ -451,6 +477,22 @@ export default function Dashboard() {
           }
         </div>
       </div>
+
+      {/* Mobile bottom tabs */}
+      <div className="mobile-bottom-nav" style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'none', padding:'8px 0 20px', zIndex:100}}>
+        {[
+          { href:'/', label:'Home', icon:'🏠' },
+          { href:'/calculator', label:'Calculator', icon:'💷' },
+          { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+          { href:'/settings', label:'Settings', icon:'⚙️' },
+        ].map(tab => (
+          <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
+            <span style={{fontSize:'22px'}}>{tab.icon}</span>
+            <span style={{fontSize:'11px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#9ca3af'}}>{tab.label}</span>
+          </Link>
+        ))}
+      </div>
+
     </main>
   );
 }
