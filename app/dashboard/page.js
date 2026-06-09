@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "../supabase";
 import { useRouter } from "next/navigation";
+import { usePlaidLink } from "react-plaid-link";
 
 const CATEGORIES = [
   { name: "Housing", keywords: ["rent", "mortgage", "letting", "estate"], color: "#1a56db", icon: "🏠" },
@@ -43,7 +44,39 @@ export default function Dashboard() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bankConnected, setBankConnected] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [linkToken, setLinkToken] = useState(null);
   const router = useRouter();
+
+  const createLinkToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch('/api/plaid/create-link-token', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+    const data = await res.json();
+    if (data.link_token) setLinkToken(data.link_token);
+  };
+
+  const onPlaidSuccess = async (public_token) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch('/api/plaid/exchange-token', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ public_token })
+    });
+    setBankConnected(true);
+  };
+
+  const { open: openPlaid, ready: plaidReady } = usePlaidLink({
+    token: linkToken,
+    onSuccess: onPlaidSuccess,
+  });
+
+  useEffect(() => {
+    if (linkToken && plaidReady) openPlaid();
+  }, [linkToken, plaidReady]);
 
   useEffect(() => {
     const init = async () => {
@@ -60,6 +93,9 @@ export default function Dashboard() {
       const { data: alerts } = await supabase.from("alert_settings").select("*").eq("user_id", user.id).single();
       if (alerts) setAlertSettings(alerts);
 
+      const { data: bankConn } = await supabase.from("bank_connections").select("id").eq("user_id", user.id).single();
+      if (bankConn) setBankConnected(true);
+
       setLoading(false);
     };
     init();
@@ -73,6 +109,23 @@ export default function Dashboard() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push("/login");
+  };
+
+  const importTransactions = async () => {
+    setImporting(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/plaid/transactions", {
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+    const data = await res.json();
+    if (data.imported > 0) {
+      const { data: txns } = await supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false });
+      if (txns) setTransactions(txns);
+      alert(`Successfully imported ${data.imported} transactions!`);
+    } else {
+      alert("No new transactions found.");
+    }
+    setImporting(false);
   };
 
   const totalSpent = transactions.reduce((s, t) => s + parseFloat(t.amount), 0);
@@ -289,6 +342,16 @@ export default function Dashboard() {
               style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'none', cursor:'pointer', boxShadow:'0 4px 12px rgba(26,86,219,0.3)'}}>
               + Add transaction
             </button>
+            <button onClick={createLinkToken} disabled={!user}
+              style={{background:'white', color:'#1a56db', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'2px solid #1a56db', cursor:'pointer'}}>
+              🏦 {bankConnected ? "Reconnect bank" : "Connect bank"}
+            </button>
+            {bankConnected && (
+              <button onClick={importTransactions} disabled={importing}
+                style={{background:'#f0fdf4', color:'#16a34a', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'2px solid #16a34a', cursor: importing ? 'not-allowed' : 'pointer'}}>
+                {importing ? "Importing..." : "↓ Import transactions"}
+              </button>
+            )}
           </div>
         </div>
 
