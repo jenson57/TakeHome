@@ -37,14 +37,14 @@ export async function GET(request) {
 
     if (!connection) return NextResponse.json({ error: 'No bank connected' }, { status: 404 });
 
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30)).toISOString().slice(0, 10);
-    const today = new Date().toISOString().slice(0, 10);
+    const endDate = new Date().toISOString().slice(0, 10);
+    const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     const response = await plaidClient.transactionsGet({
       access_token: connection.access_token,
-      start_date: thirtyDaysAgo,
-      end_date: today,
+      start_date: startDate,
+      end_date: endDate,
+      options: { count: 100 }
     });
 
     const transactions = response.data.transactions
