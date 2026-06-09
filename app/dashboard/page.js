@@ -376,7 +376,13 @@ export default function Dashboard() {
               <span style={{fontSize:'13px', color:'#6b7280', fontWeight:'500'}}>Monthly take-home</span>
               <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
                 <span style={{color:'#1a56db', fontSize:'15px', fontWeight:'700'}}>£</span>
-                <input type="number" value={netPay} onChange={e => setNetPay(parseFloat(e.target.value) || 0)}
+                <input 
+                  type="text"
+                  inputMode="numeric"
+                  value={netPay === 0 ? '' : netPay}
+                  onChange={e => setNetPay(parseFloat(e.target.value) || 0)}
+                  onFocus={e => setTimeout(() => e.target.select(), 0)}
+                  placeholder="0"
                   style={{width:'75px', border:'none', outline:'none', fontSize:'15px', fontWeight:'700', color:'#0a1628'}} />
               </div>
             </div>
