@@ -30,6 +30,36 @@ function fmt(n) {
   return "£" + Math.abs(parseFloat(n) || 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function FloatingInsights({ insights }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{position:'fixed', bottom:'90px', right:'24px', zIndex:200}}>
+      {open && (
+        <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'20px', marginBottom:'12px', width:'300px', boxShadow:'0 8px 30px rgba(26,86,219,0.15)', maxHeight:'400px', overflowY:'auto'}}>
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px'}}>
+            <p style={{fontSize:'14px', fontWeight:'800', color:'#0a1628'}}>💡 Spending Insights</p>
+            <button onClick={() => setOpen(false)} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'#9ca3af'}}>×</button>
+          </div>
+          {insights.length === 0
+            ? <p style={{fontSize:'13px', color:'#9ca3af'}}>Add transactions from 2+ months to see insights.</p>
+            : <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
+                {insights.map((insight, i) => (
+                  <div key={i} style={{display:'flex', alignItems:'flex-start', gap:'10px', padding:'10px 12px', background:'#f7f9ff', borderRadius:'10px', border:'1px solid #e8f0fe'}}>
+                    <span style={{fontSize:'16px', flexShrink:0}}>{insight.icon}</span>
+                    <p style={{fontSize:'12px', color:insight.color, fontWeight:'500', lineHeight:'1.5', margin:0}}>{insight.text}</p>
+                  </div>
+                ))}
+              </div>
+          }
+        </div>
+      )}
+      <button onClick={() => setOpen(!open)}
+        style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', border:'none', borderRadius:'999px', width:'52px', height:'52px', fontSize:'22px', cursor:'pointer', boxShadow:'0 4px 16px rgba(26,86,219,0.4)', display:'flex', alignItems:'center', justifyContent:'center', marginLeft:'auto'}}>
+        {open ? '×' : '💡'}
+      </button>
+    </div>
+  );
+}
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [netPay, setNetPay] = useState(0);
@@ -655,6 +685,10 @@ export default function Dashboard() {
         </div>
       </div>
 
+{/* Floating insights popup */}
+      {transactions.length > 0 && (
+        <FloatingInsights insights={getInsights()} />
+      )}
       {/* Mobile bottom tabs */}
       <div className="mobile-bottom-nav" style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'none', padding:'8px 0 20px', zIndex:100}}>
         {[
