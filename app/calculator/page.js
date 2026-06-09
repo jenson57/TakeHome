@@ -19,10 +19,11 @@ function LogoutButton() {
 }
 
 const TABS = [
-  { href:'/', label:'Home', icon:'🏠' },
-  { href:'/calculator', label:'Calculator', icon:'💷', active:true },
-  { href:'/dashboard', label:'Dashboard', icon:'📊' },
-  { href:'/settings', label:'Settings', icon:'⚙️' },
+ { href:'/', label:'Home', icon:'🏠' },
+{ href:'/calculator', label:'Calculator', icon:'💷' , active:true},
+{ href:'/dashboard', label:'Dashboard', icon:'📊' },
+{ href:'/analytics', label:'Analytics', icon:'📈' },
+{ href:'/settings', label:'Settings', icon:'⚙️' },
 ];
 
 export default function CalculatorPage() {
@@ -96,10 +97,11 @@ export default function CalculatorPage() {
       <div style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'flex', padding:'8px 0 20px', zIndex:100}} className="mobile-bottom-nav">
         <style>{`.mobile-bottom-nav{display:none!important} @media(max-width:640px){.mobile-bottom-nav{display:flex!important}}`}</style>
         {[
-          { href:'/', label:'Home', icon:'🏠' },
-          { href:'/calculator', label:'Calculator', icon:'💷', active:true },
-          { href:'/dashboard', label:'Dashboard', icon:'📊' },
-          { href:'/settings', label:'Settings', icon:'⚙️' },
+ { href:'/', label:'Home', icon:'🏠' },
+{ href:'/calculator', label:'Calculator', icon:'💷' , active:true},
+{ href:'/dashboard', label:'Dashboard', icon:'📊' },
+{ href:'/analytics', label:'Analytics', icon:'📈' },
+{ href:'/settings', label:'Settings', icon:'⚙️' },
         ].map(tab => (
           <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
             <span style={{fontSize:'22px'}}>{tab.icon}</span>

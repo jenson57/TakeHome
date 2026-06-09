@@ -18,10 +18,11 @@ function LogoutButton() {
 }
 
 const TABS = [
-  { href:'/', label:'Home', icon:'🏠' },
-  { href:'/calculator', label:'Calculator', icon:'💷' },
-  { href:'/dashboard', label:'Dashboard', icon:'📊' },
-  { href:'/settings', label:'Settings', icon:'⚙️', active:true },
+{ href:'/', label:'Home', icon:'🏠' },
+{ href:'/calculator', label:'Calculator', icon:'💷' },
+{ href:'/dashboard', label:'Dashboard', icon:'📊' },
+{ href:'/analytics', label:'Analytics', icon:'📈' },
+{ href:'/settings', label:'Settings', icon:'⚙️' , active:true},
 ];
 
 export default function Settings() {

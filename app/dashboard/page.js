@@ -83,19 +83,14 @@ export default function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
       setUser(user);
-
       const { data: txns } = await supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false });
       if (txns) setTransactions(txns);
-
       const { data: settings } = await supabase.from("budget_settings").select("*").eq("user_id", user.id).single();
       if (settings) setNetPay(settings.net_pay);
-
       const { data: alerts } = await supabase.from("alert_settings").select("*").eq("user_id", user.id).single();
       if (alerts) setAlertSettings(alerts);
-
       const { data: bankConn } = await supabase.from("bank_connections").select("id").eq("user_id", user.id).single();
       if (bankConn) setBankConnected(true);
-
       setLoading(false);
     };
     init();
@@ -143,8 +138,17 @@ export default function Dashboard() {
       { date: "2026-06-15", description: "John Lewis", amount: 120.00, category: "Shopping" },
       { date: "2026-06-15", description: "Dentist", amount: 65.00, category: "Health" },
       { date: "2026-06-16", description: "Lidl", amount: 38.60, category: "Food & Groceries" },
+      { date: "2026-05-01", description: "Rent payment", amount: 950, category: "Housing" },
+      { date: "2026-05-03", description: "Tesco", amount: 120.00, category: "Food & Groceries" },
+      { date: "2026-05-05", description: "Netflix", amount: 10.99, category: "Entertainment" },
+      { date: "2026-05-06", description: "Uber", amount: 8.50, category: "Transport" },
+      { date: "2026-05-08", description: "Deliveroo", amount: 45.00, category: "Eating Out" },
+      { date: "2026-05-10", description: "Sky Broadband", amount: 42.00, category: "Bills & Utilities" },
+      { date: "2026-05-12", description: "Savings transfer", amount: 200, category: "Savings" },
+      { date: "2026-05-15", description: "Amazon", amount: 89.99, category: "Shopping" },
+      { date: "2026-05-18", description: "Boots", amount: 15.00, category: "Health" },
+      { date: "2026-05-20", description: "Shell Fuel", amount: 60.00, category: "Transport" },
     ].map(t => ({ ...t, user_id: user.id }));
-
     const { error } = await supabase.from("transactions").insert(testTransactions);
     if (!error) {
       const { data: txns } = await supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false });
@@ -249,6 +253,45 @@ export default function Dashboard() {
 
   const savingsTotal = alertSettings ? transactions.filter(t => t.category === alertSettings.savings_category).reduce((s, t) => s + parseFloat(t.amount), 0) : 0;
 
+  const getInsights = () => {
+    const allMonths = [...new Set(transactions.map(t => t.date.slice(0, 7)))].sort().reverse();
+    const currentMonth = allMonths[0];
+    const prevMonth = allMonths[1];
+    if (!prevMonth || !currentMonth) return [];
+
+    const getMonthCatTotal = (month, category) =>
+      transactions.filter(t => t.date.startsWith(month) && t.category === category).reduce((s, t) => s + parseFloat(t.amount), 0);
+
+    const currentTotal = transactions.filter(t => t.date.startsWith(currentMonth)).reduce((s, t) => s + parseFloat(t.amount), 0);
+    const prevTotal = transactions.filter(t => t.date.startsWith(prevMonth)).reduce((s, t) => s + parseFloat(t.amount), 0);
+    const overallChange = prevTotal > 0 ? Math.round(((currentTotal - prevTotal) / prevTotal) * 100) : 0;
+    const formatMonth = (m) => new Date(m + '-01').toLocaleDateString('en-GB', { month: 'long' });
+
+    const insights = [];
+
+    if (overallChange > 10) insights.push({ icon: '📈', text: `Overall spending up ${overallChange}% vs ${formatMonth(prevMonth)}`, color: '#dc2626' });
+    else if (overallChange < -10) insights.push({ icon: '📉', text: `Overall spending down ${Math.abs(overallChange)}% vs ${formatMonth(prevMonth)}`, color: '#16a34a' });
+    else insights.push({ icon: '✅', text: `Spending is stable vs ${formatMonth(prevMonth)} (${overallChange > 0 ? '+' : ''}${overallChange}%)`, color: '#1a56db' });
+
+    CATEGORIES.forEach(cat => {
+      const curr = getMonthCatTotal(currentMonth, cat.name);
+      const prev = getMonthCatTotal(prevMonth, cat.name);
+      if (curr === 0 && prev === 0) return;
+      const change = prev > 0 ? Math.round(((curr - prev) / prev) * 100) : 0;
+      if (change >= 50) insights.push({ icon: '⚠️', text: `${cat.name} up ${change}% — ${fmt(prev)} → ${fmt(curr)}`, color: '#dc2626' });
+      else if (change <= -30) insights.push({ icon: '💚', text: `${cat.name} down ${Math.abs(change)}% — ${fmt(prev)} → ${fmt(curr)}`, color: '#16a34a' });
+      if (curr > 0 && prev === 0) insights.push({ icon: '🆕', text: `New ${cat.name} spending this month — ${fmt(curr)}`, color: '#d97706' });
+      if (curr === 0 && prev > 0) insights.push({ icon: '🎉', text: `No ${cat.name} this month — saved ${fmt(prev)} vs last month`, color: '#16a34a' });
+    });
+
+    const topCat = categoryTotals[0];
+    if (topCat && netPay > 0 && (topCat.total / netPay) > 0.3) {
+      insights.push({ icon: '💡', text: `${topCat.name} is your biggest expense at ${Math.round((topCat.total / netPay) * 100)}% of take-home`, color: '#d97706' });
+    }
+
+    return insights.slice(0, 6);
+  };
+
   if (loading) return (
     <main className="min-h-screen" style={{background:'#f7f9ff', display:'flex', alignItems:'center', justifyContent:'center'}}>
       <div style={{textAlign:'center'}}>
@@ -291,10 +334,12 @@ export default function Dashboard() {
           <div className="desktop-nav" style={{display:'flex', alignItems:'center', gap:'12px'}}>
             <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
               {[
-                { href:'/', label:'Home', icon:'🏠' },
-                { href:'/calculator', label:'Calculator', icon:'💷' },
-                { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-                { href:'/settings', label:'Settings', icon:'⚙️' },
+ { href:'/', label:'Home', icon:'🏠' },
+{ href:'/calculator', label:'Calculator', icon:'💷' },
+{ href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+{ href:'/analytics', label:'Analytics', icon:'📈' },
+{ href:'/settings', label:'Settings', icon:'⚙️' },
+
               ].map(tab => (
                 <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
                   <span>{tab.icon}</span>{tab.label}
@@ -315,10 +360,11 @@ export default function Dashboard() {
         {menuOpen && (
           <div className="mobile-menu" style={{borderTop:'1px solid #e8f0fe', marginTop:'12px', paddingTop:'12px'}}>
             {[
-              { href:'/', label:'Home', icon:'🏠' },
-              { href:'/calculator', label:'Calculator', icon:'💷' },
-              { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-              { href:'/settings', label:'Settings', icon:'⚙️' },
+{ href:'/', label:'Home', icon:'🏠' },
+{ href:'/calculator', label:'Calculator', icon:'💷' },
+{ href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+{ href:'/analytics', label:'Analytics', icon:'📈' },
+{ href:'/settings', label:'Settings', icon:'⚙️' },
             ].map(tab => (
               <Link key={tab.href} href={tab.href} onClick={() => setMenuOpen(false)}
                 style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px 16px', borderRadius:'10px', fontSize:'15px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#0a1628', background: tab.active ? '#f0f5ff' : 'transparent', textDecoration:'none', marginBottom:'4px'}}>
@@ -376,11 +422,8 @@ export default function Dashboard() {
               <span style={{fontSize:'13px', color:'#6b7280', fontWeight:'500'}}>Monthly take-home</span>
               <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
                 <span style={{color:'#1a56db', fontSize:'15px', fontWeight:'700'}}>£</span>
-                <input 
-                  type="text"
-                  inputMode="numeric"
-                  value={netPay === 0 ? '' : netPay}
-                  onChange={e => setNetPay(parseFloat(e.target.value) || 0)}
+                <input type="text" inputMode="numeric" value={netPay || ''}
+                  onChange={e => setNetPay(parseFloat(e.target.value.replace(/[^0-9.]/g, '')) || 0)}
                   onFocus={e => setTimeout(() => e.target.select(), 0)}
                   placeholder="0"
                   style={{width:'75px', border:'none', outline:'none', fontSize:'15px', fontWeight:'700', color:'#0a1628'}} />
@@ -472,7 +515,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Category breakdown + pie chart */}
+        {/* Category breakdown + pie chart with insights */}
         <div className="dash-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px', marginBottom:'24px'}}>
           <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Breakdown</p>
@@ -506,26 +549,45 @@ export default function Dashboard() {
             <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>Spending breakdown</h2>
             {pieSlices.length === 0
               ? <p style={{color:'#9ca3af', fontSize:'14px'}}>No transactions yet</p>
-              : <div style={{display:'flex', gap:'20px', alignItems:'center', flexWrap:'wrap'}}>
-                  <svg viewBox="0 0 200 200" style={{width:'170px', height:'170px', flexShrink:0}}>
-                    {pieSlices.map((s, i) => <path key={i} d={s.d} fill={s.color} />)}
-                    <circle cx="100" cy="100" r="52" fill="white" />
-                    <text x="100" y="95" textAnchor="middle" fontSize="12" fill="#0a1628" fontWeight="800">{fmt(totalSpent)}</text>
-                    <text x="100" y="112" textAnchor="middle" fontSize="10" fill="#6b7280">total spent</text>
-                  </svg>
-                  <div style={{display:'flex', flexDirection:'column', gap:'10px', flex:1}}>
-                    {pieSlices.map((s, i) => (
-                      <div key={i} style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                        <div style={{width:'10px', height:'10px', borderRadius:'3px', background:s.color, flexShrink:0}}></div>
-                        <span style={{fontSize:'13px', color:'#4a5568', flex:1}}>{s.name}</span>
-                        <span style={{fontSize:'13px', fontWeight:'700', color:'#0a1628'}}>{s.pct}%</span>
-                      </div>
-                    ))}
+              : <>
+                  <div style={{display:'flex', gap:'20px', alignItems:'center', flexWrap:'wrap', marginBottom:'20px'}}>
+                    <svg viewBox="0 0 200 200" style={{width:'150px', height:'150px', flexShrink:0}}>
+                      {pieSlices.map((s, i) => <path key={i} d={s.d} fill={s.color} />)}
+                      <circle cx="100" cy="100" r="52" fill="white" />
+                      <text x="100" y="95" textAnchor="middle" fontSize="12" fill="#0a1628" fontWeight="800">{fmt(totalSpent)}</text>
+                      <text x="100" y="112" textAnchor="middle" fontSize="10" fill="#6b7280">total spent</text>
+                    </svg>
+                    <div style={{display:'flex', flexDirection:'column', gap:'8px', flex:1}}>
+                      {pieSlices.map((s, i) => (
+                        <div key={i} style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                          <div style={{width:'10px', height:'10px', borderRadius:'3px', background:s.color, flexShrink:0}}></div>
+                          <span style={{fontSize:'12px', color:'#4a5568', flex:1}}>{s.name}</span>
+                          <span style={{fontSize:'12px', fontWeight:'700', color:'#0a1628'}}>{s.pct}%</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+
+                </>
             }
           </div>
         </div>
+
+        {/* Spending Insights */}
+        {getInsights().length > 0 && (
+          <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
+            <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Analytics</p>
+            <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>💡 Spending Insights</h2>
+            <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+              {getInsights().map((insight, i) => (
+                <div key={i} style={{display:'flex', alignItems:'flex-start', gap:'12px', padding:'12px 16px', background:'#f7f9ff', borderRadius:'10px', border:'1px solid #e8f0fe'}}>
+                  <span style={{fontSize:'20px', flexShrink:0}}>{insight.icon}</span>
+                  <p style={{fontSize:'14px', color:insight.color, fontWeight:'500', lineHeight:'1.5', margin:0}}>{insight.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Transactions */}
         <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
@@ -596,10 +658,11 @@ export default function Dashboard() {
       {/* Mobile bottom tabs */}
       <div className="mobile-bottom-nav" style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'none', padding:'8px 0 20px', zIndex:100}}>
         {[
-          { href:'/', label:'Home', icon:'🏠' },
-          { href:'/calculator', label:'Calculator', icon:'💷' },
-          { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-          { href:'/settings', label:'Settings', icon:'⚙️' },
+{ href:'/', label:'Home', icon:'🏠' },
+{ href:'/calculator', label:'Calculator', icon:'💷' },
+{ href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+{ href:'/analytics', label:'Analytics', icon:'📈' },
+{ href:'/settings', label:'Settings', icon:'⚙️' },
         ].map(tab => (
           <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
             <span style={{fontSize:'22px'}}>{tab.icon}</span>
