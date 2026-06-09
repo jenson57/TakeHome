@@ -111,6 +111,48 @@ export default function Dashboard() {
     router.push("/login");
   };
 
+  const loadTestData = async () => {
+    const testTransactions = [
+      { date: "2026-06-01", description: "Rent payment", amount: 950, category: "Housing" },
+      { date: "2026-06-02", description: "Tesco", amount: 85.50, category: "Food & Groceries" },
+      { date: "2026-06-02", description: "Uber", amount: 12.40, category: "Transport" },
+      { date: "2026-06-03", description: "Netflix", amount: 10.99, category: "Entertainment" },
+      { date: "2026-06-03", description: "Deliveroo", amount: 24.50, category: "Eating Out" },
+      { date: "2026-06-04", description: "Spotify", amount: 9.99, category: "Entertainment" },
+      { date: "2026-06-04", description: "Sainsbury", amount: 62.30, category: "Food & Groceries" },
+      { date: "2026-06-05", description: "Amazon", amount: 34.99, category: "Shopping" },
+      { date: "2026-06-05", description: "BP Fuel", amount: 65.00, category: "Transport" },
+      { date: "2026-06-06", description: "Costa Coffee", amount: 8.50, category: "Eating Out" },
+      { date: "2026-06-06", description: "Sky Broadband", amount: 42.00, category: "Bills & Utilities" },
+      { date: "2026-06-07", description: "EDF Energy", amount: 89.00, category: "Bills & Utilities" },
+      { date: "2026-06-07", description: "Boots", amount: 23.40, category: "Health" },
+      { date: "2026-06-08", description: "JD Sports", amount: 75.00, category: "Shopping" },
+      { date: "2026-06-08", description: "Nandos", amount: 32.00, category: "Eating Out" },
+      { date: "2026-06-09", description: "Savings transfer", amount: 300, category: "Savings" },
+      { date: "2026-06-09", description: "Aldi", amount: 45.20, category: "Food & Groceries" },
+      { date: "2026-06-10", description: "TfL", amount: 38.40, category: "Transport" },
+      { date: "2026-06-10", description: "Disney+", amount: 4.99, category: "Entertainment" },
+      { date: "2026-06-11", description: "ASOS", amount: 67.99, category: "Shopping" },
+      { date: "2026-06-11", description: "Gym membership", amount: 35.00, category: "Health" },
+      { date: "2026-06-12", description: "Waitrose", amount: 92.10, category: "Food & Groceries" },
+      { date: "2026-06-12", description: "Uber Eats", amount: 28.50, category: "Eating Out" },
+      { date: "2026-06-13", description: "Amazon Prime", amount: 8.99, category: "Entertainment" },
+      { date: "2026-06-13", description: "Shell Fuel", amount: 71.00, category: "Transport" },
+      { date: "2026-06-14", description: "Council Tax", amount: 145.00, category: "Bills & Utilities" },
+      { date: "2026-06-14", description: "Starbucks", amount: 6.80, category: "Eating Out" },
+      { date: "2026-06-15", description: "John Lewis", amount: 120.00, category: "Shopping" },
+      { date: "2026-06-15", description: "Dentist", amount: 65.00, category: "Health" },
+      { date: "2026-06-16", description: "Lidl", amount: 38.60, category: "Food & Groceries" },
+    ].map(t => ({ ...t, user_id: user.id }));
+
+    const { error } = await supabase.from("transactions").insert(testTransactions);
+    if (!error) {
+      const { data: txns } = await supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false });
+      if (txns) setTransactions(txns);
+      alert("30 test transactions loaded!");
+    }
+  };
+
   const importTransactions = async () => {
     setImporting(true);
     const { data: { session } } = await supabase.auth.getSession();
@@ -352,6 +394,10 @@ export default function Dashboard() {
                 {importing ? "Importing..." : "↓ Import transactions"}
               </button>
             )}
+            <button onClick={loadTestData}
+              style={{background:'#f5f3ff', color:'#7C3AED', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'2px solid #7C3AED', cursor:'pointer'}}>
+              🧪 Load test data
+            </button>
           </div>
         </div>
 

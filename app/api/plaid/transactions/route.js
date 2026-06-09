@@ -37,6 +37,14 @@ export async function GET(request) {
 
     if (!connection) return NextResponse.json({ error: 'No bank connected' }, { status: 404 });
 
+    // Force refresh transactions
+    try {
+      await plaidClient.transactionsRefresh({ access_token: connection.access_token });
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    } catch (e) {
+      console.log('Refresh note:', e.message);
+    }
+
     const endDate = new Date().toISOString().slice(0, 10);
     const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -46,6 +54,8 @@ export async function GET(request) {
       end_date: endDate,
       options: { count: 100 }
     });
+
+    console.log('Plaid returned', response.data.transactions.length, 'transactions');
 
     const transactions = response.data.transactions
       .filter(t => t.amount > 0)
@@ -64,6 +74,6 @@ export async function GET(request) {
     return NextResponse.json({ imported: transactions.length });
   } catch (err) {
     console.error('Transactions error:', err.response?.data || err.message);
-    return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
