@@ -368,6 +368,7 @@ export default function Dashboard() {
 { href:'/calculator', label:'Calculator', icon:'💷' },
 { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
 { href:'/analytics', label:'Analytics', icon:'📈' },
+{ href: '/bills', label: 'Bills', icon: '🧾' },
 { href:'/settings', label:'Settings', icon:'⚙️' },
 
               ].map(tab => (
@@ -394,6 +395,7 @@ export default function Dashboard() {
 { href:'/calculator', label:'Calculator', icon:'💷' },
 { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
 { href:'/analytics', label:'Analytics', icon:'📈' },
+{ href: '/bills', label: 'Bills', icon: '🧾' },
 { href:'/settings', label:'Settings', icon:'⚙️' },
             ].map(tab => (
               <Link key={tab.href} href={tab.href} onClick={() => setMenuOpen(false)}
@@ -696,6 +698,7 @@ export default function Dashboard() {
 { href:'/calculator', label:'Calculator', icon:'💷' },
 { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
 { href:'/analytics', label:'Analytics', icon:'📈' },
+{ href: '/bills', label: 'Bills', icon: '🧾' },
 { href:'/settings', label:'Settings', icon:'⚙️' },
         ].map(tab => (
           <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
