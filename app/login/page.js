@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [firstName, setFirstName] = useState("");
+const [lastName, setLastName] = useState("");
+const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -29,8 +31,17 @@ export default function Login() {
       return;
     }
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+if (isSignUp) {
+  if (!firstName.trim() || !lastName.trim()) {
+    setError("Please enter your first and last name.");
+    setLoading(false);
+    return;
+  }
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: `${firstName.trim()} ${lastName.trim()}` } }
+  });
       if (error) setError(error.message);
       else setMessage("Check your email for a confirmation link!");
     } else {
@@ -73,9 +84,33 @@ export default function Login() {
           </div>
 
           {/* Form */}
-          <div style={{display:'flex', flexDirection:'column', gap:'16px', marginBottom:'24px'}}>
-            <div>
-              <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>Email address</label>
+  <div style={{display:'flex', flexDirection:'column', gap:'16px', marginBottom:'24px'}}>
+  {isSignUp && (
+    <div style={{display:'flex', gap:'12px'}}>
+      <div style={{flex:1}}>
+        <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>First name</label>
+        <input
+          type="text"
+          placeholder="Jane"
+          value={firstName}
+          onChange={e => setFirstName(e.target.value)}
+          style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'12px 16px', fontSize:'15px', color:'#0a1628', outline:'none', boxSizing:'border-box'}}
+        />
+      </div>
+      <div style={{flex:1}}>
+        <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>Last name</label>
+        <input
+          type="text"
+          placeholder="Smith"
+          value={lastName}
+          onChange={e => setLastName(e.target.value)}
+          style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'12px 16px', fontSize:'15px', color:'#0a1628', outline:'none', boxSizing:'border-box'}}
+        />
+      </div>
+    </div>
+  )}
+  <div>
+    <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>Email address</label>
               <input
                 type="email"
                 placeholder="you@example.com"
@@ -138,7 +173,7 @@ export default function Login() {
           ) : (
             <p style={{textAlign:'center', fontSize:'14px', color:'#6b7280'}}>
               {isSignUp ? "Already have an account? " : "Don't have an account? "}
-              <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }}
+              <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); setFirstName(""); setLastName(""); }}
                 style={{background:'none', border:'none', color:'#1a56db', fontWeight:'700', cursor:'pointer', fontSize:'14px'}}>
                 {isSignUp ? "Sign in" : "Sign up for free"}
               </button>

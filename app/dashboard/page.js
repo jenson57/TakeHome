@@ -447,8 +447,7 @@ export default function Dashboard() {
           <div>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'6px'}}>Finance Tracker</p>
             <h1 style={{fontSize:'32px', fontWeight:'800', color:'#0a1628', letterSpacing:'-0.5px', marginBottom:'6px'}}>Spending Dashboard</h1>
-            <p style={{fontSize:'15px', color:'#6b7280'}}>Welcome back, {user?.email}</p>
-          </div>
+<p style={{fontSize:'15px', color:'#6b7280'}}>Welcome back, {user?.user_metadata?.full_name || user?.email}</p>          </div>
           <div style={{display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap'}}>
             <div style={{display:'flex', alignItems:'center', gap:'8px', background:'white', border:'1px solid #e8f0fe', borderRadius:'12px', padding:'10px 16px', boxShadow:'0 2px 8px rgba(26,86,219,0.06)'}}>
               <span style={{fontSize:'13px', color:'#6b7280', fontWeight:'500'}}>Monthly take-home</span>

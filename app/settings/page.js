@@ -44,15 +44,23 @@ export default function Settings() {
   const [savingsCategory, setSavingsCategory] = useState("Savings");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertLoading, setAlertLoading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const router = useRouter();
+const [menuOpen, setMenuOpen] = useState(false);
+const [fullName, setFullName] = useState("");
+const [newName, setNewName] = useState("");
+const [nameMessage, setNameMessage] = useState("");
+const [nameError, setNameError] = useState("");
+const [nameLoading, setNameLoading] = useState(false);
+const router = useRouter();
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
-      setUser(user);
-      setEmail(user.email);
+ setUser(user);
+setEmail(user.email);
+const name = user.user_metadata?.full_name || "";
+setFullName(name);
+setNewName(name);
       const { data: alerts } = await supabase.from("alert_settings").select("*").eq("user_id", user.id).single();
       if (alerts) {
         setSpendingAlert(alerts.spending_alert);
@@ -64,7 +72,18 @@ export default function Settings() {
     init();
   }, []);
 
-  const handleEmailUpdate = async () => {
+  const handleNameUpdate = async () => {
+  setNameLoading(true);
+  setNameError("");
+  setNameMessage("");
+  if (!newName.trim()) { setNameError("Please enter your name."); setNameLoading(false); return; }
+  const { error } = await supabase.auth.updateUser({ data: { full_name: newName.trim() } });
+  if (error) setNameError(error.message);
+  else { setFullName(newName.trim()); setNameMessage("Name updated successfully!"); }
+  setNameLoading(false);
+};
+
+const handleEmailUpdate = async () => {
     setEmailLoading(true);
     setEmailError("");
     setEmailMessage("");
@@ -176,18 +195,36 @@ export default function Settings() {
         <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
           <div style={{display:'flex', alignItems:'center', gap:'16px'}}>
             <div style={{width:'52px', height:'52px', borderRadius:'14px', background:'linear-gradient(135deg, #1a56db, #0e3fa8)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <span style={{color:'white', fontWeight:'800', fontSize:'22px'}}>{email ? email[0].toUpperCase() : '?'}</span>
+              <span style={{color:'white', fontWeight:'800', fontSize:'22px'}}>{fullName ? fullName[0].toUpperCase() : email ? email[0].toUpperCase() : '?'}</span>
             </div>
             <div>
-              <p style={{fontSize:'16px', fontWeight:'700', color:'#0a1628', marginBottom:'2px'}}>{email}</p>
-              <p style={{fontSize:'13px', color:'#9ca3af'}}>Takehome account</p>
+ <p style={{fontSize:'16px', fontWeight:'700', color:'#0a1628', marginBottom:'2px'}}>{fullName || email}</p>
+<p style={{fontSize:'13px', color:'#9ca3af'}}>{fullName ? email : 'Takehome account'}</p>
             </div>
           </div>
         </div>
 
         {/* Change email */}
-        <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
-          <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Email</p>
+ {/* Name */}
+<div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
+  <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Profile</p>
+  <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>Your name</h2>
+  <div style={{marginBottom:'20px'}}>
+    <label style={{fontSize:'13px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'8px'}}>Full name</label>
+    <input type="text" placeholder="Jane Smith" value={newName} onChange={e => setNewName(e.target.value)}
+      style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:'10px', padding:'12px 16px', fontSize:'15px', color:'#0a1628', outline:'none', boxSizing:'border-box'}} />
+  </div>
+  {nameError && <div style={{background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'10px', padding:'12px 16px', marginBottom:'16px'}}><p style={{fontSize:'14px', color:'#dc2626', fontWeight:'500'}}>{nameError}</p></div>}
+  {nameMessage && <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:'10px', padding:'12px 16px', marginBottom:'16px'}}><p style={{fontSize:'14px', color:'#16a34a', fontWeight:'500'}}>{nameMessage}</p></div>}
+  <button onClick={handleNameUpdate} disabled={nameLoading}
+    style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'12px 28px', borderRadius:'10px', fontSize:'14px', fontWeight:'700', border:'none', cursor: nameLoading ? 'not-allowed' : 'pointer', opacity: nameLoading ? 0.7 : 1, boxShadow:'0 2px 8px rgba(26,86,219,0.25)'}}>
+    {nameLoading ? "Updating..." : "Update name"}
+  </button>
+</div>
+
+{/* Change email */}
+<div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
+  <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Email</p>
           <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>Change email address</h2>
           <div style={{display:'flex', flexDirection:'column', gap:'16px', marginBottom:'20px'}}>
             <div>
