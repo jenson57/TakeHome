@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '../supabase';
 
 const CATEGORIES = ['Bills', 'Housing', 'Subscriptions', 'Utilities', 'Insurance', 'Transport', 'Other'];
@@ -119,12 +120,28 @@ export default function BillsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f7f9ff', fontFamily: 'Inter, sans-serif' }}>
       {/* Header */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e8f0fe', padding: '0 24px' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
-          <span style={{ fontWeight: 700, fontSize: 20, color: '#1a56db' }}>🧾 Bills</span>
-          <button onClick={handleSignOut} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 14, cursor: 'pointer' }}>Sign out</button>
+      <nav style={{ borderBottom: '1px solid #e8f0fe', background: 'white', padding: '0 16px', position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: '72rem', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <div style={{ background: 'linear-gradient(135deg, #1a56db, #0e3fa8)', width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'white', fontWeight: 800, fontSize: 14 }}>T</span>
+            </div>
+            <span style={{ fontWeight: 800, color: '#0a1628', fontSize: 18, letterSpacing: '-0.3px' }}>Takehome</span>
+          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f0f5ff', borderRadius: 12, padding: 4 }}>
+              {NAV_TABS.map(tab => (
+                <Link key={tab.href} href={tab.href} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 9, fontSize: 14, fontWeight: tab.href === '/bills' ? 700 : 500, color: tab.href === '/bills' ? '#1a56db' : '#6b7280', background: tab.href === '/bills' ? 'white' : 'transparent', textDecoration: 'none', boxShadow: tab.href === '/bills' ? '0 1px 4px rgba(26,86,219,0.12)' : 'none' }}>
+                  <span>{tab.icon}</span>{tab.label}
+                </Link>
+              ))}
+            </div>
+            <button onClick={handleSignOut} style={{ background: '#f3f4f6', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 14, color: '#6b7280', cursor: 'pointer', fontWeight: 600 }}>
+              Sign out
+            </button>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 100px' }}>
 
@@ -274,15 +291,6 @@ export default function BillsPage() {
         )}
       </div>
 
-      {/* Bottom Nav */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #e8f0fe', display: 'flex', zIndex: 100 }}>
-        {NAV_TABS.map(tab => (
-          <a key={tab.href} href={tab.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', textDecoration: 'none', color: tab.href === '/bills' ? '#1a56db' : '#9ca3af', fontSize: 10, fontWeight: tab.href === '/bills' ? 700 : 400, borderTop: tab.href === '/bills' ? '2px solid #1a56db' : '2px solid transparent' }}>
-            <span style={{ fontSize: 20, marginBottom: 2 }}>{tab.icon}</span>
-            {tab.label}
-          </a>
-        ))}
-      </div>
     </div>
   );
 }

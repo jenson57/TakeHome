@@ -45,19 +45,13 @@ export async function GET(request) {
       console.log('Refresh note:', e.message);
     }
 
-    const endDate = new Date().toISOString().slice(0, 10);
-    const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-
-    const response = await plaidClient.transactionsGet({
+    const syncResponse = await plaidClient.transactionsSync({
       access_token: connection.access_token,
-      start_date: startDate,
-      end_date: endDate,
-      options: { count: 100 }
     });
 
-    console.log('Plaid returned', response.data.transactions.length, 'transactions');
+    console.log('Plaid sync returned', syncResponse.data.added.length, 'transactions');
 
-    const transactions = response.data.transactions
+    const transactions = syncResponse.data.added
       .filter(t => t.amount > 0)
       .map(t => ({
         user_id: user.id,
