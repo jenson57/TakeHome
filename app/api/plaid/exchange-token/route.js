@@ -14,8 +14,6 @@ const plaidClient = new PlaidApi(new Configuration({
 
 export async function POST(request) {
   try {
-    const { public_token } = await request.json();
-
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -26,25 +24,39 @@ export async function POST(request) {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const { public_token } = await request.json();
+    if (!public_token) return NextResponse.json({ error: 'No public_token provided' }, { status: 400 });
+
+    // Exchange public token for access token
     const exchangeResponse = await plaidClient.itemPublicTokenExchange({ public_token });
     const accessToken = exchangeResponse.data.access_token;
+
+    console.log('Token exchanged successfully for user', user.id);
 
     const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    await adminSupabase.from('bank_connections').upsert({
-      user_id: user.id,
-      access_token: accessToken,
-      refresh_token: 'plaid',
-      expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-      provider: 'plaid',
-    }, { onConflict: 'user_id' });
+    // Save access token to Supabase
+    const { error } = await adminSupabase
+      .from('bank_connections')
+      .upsert({
+        user_id: user.id,
+        access_token: accessToken,
+        provider: 'plaid',
+      }, { onConflict: 'user_id' });
 
+    if (error) {
+      console.error('Supabase insert error:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    console.log('Bank connection saved for user', user.id);
     return NextResponse.json({ success: true });
+
   } catch (err) {
     console.error('Exchange token error:', err.response?.data || err.message);
-    return NextResponse.json({ error: 'Failed to exchange token' }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
