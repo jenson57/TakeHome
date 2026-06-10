@@ -45,17 +45,28 @@ export async function POST(request) {
     );
 
     console.log('Saving to Supabase...');
+    
+    // Delete existing connection first
+    await adminSupabase
+      .from('bank_connections')
+      .delete()
+      .eq('user_id', user.id);
+
+    // Insert fresh
     const { data, error } = await adminSupabase
       .from('bank_connections')
-      .upsert({
+      .insert({
         user_id: user.id,
         access_token: accessToken,
         provider: 'plaid',
-      }, { onConflict: 'user_id' });
+      });
 
-    console.log('Upsert result - data:', data, 'error:', error?.message);
+    console.log('Insert result - data:', JSON.stringify(data), 'error:', error?.message);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error('Supabase error details:', JSON.stringify(error));
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
 
