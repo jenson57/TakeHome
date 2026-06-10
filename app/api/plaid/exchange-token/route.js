@@ -14,6 +14,8 @@ const plaidClient = new PlaidApi(new Configuration({
 
 export async function POST(request) {
   try {
+    console.log('Exchange token route called');
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -21,25 +23,29 @@ export async function POST(request) {
 
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
-    const { data: { user } } = await supabase.auth.getUser(token);
+    console.log('Auth token present:', !!token);
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    console.log('User:', user?.id, 'Auth error:', authError?.message);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { public_token } = await request.json();
-    if (!public_token) return NextResponse.json({ error: 'No public_token provided' }, { status: 400 });
+    const body = await request.json();
+    console.log('Body keys:', Object.keys(body));
+    const { public_token } = body;
+    if (!public_token) return NextResponse.json({ error: 'No public_token' }, { status: 400 });
 
-    // Exchange public token for access token
+    console.log('Exchanging public token...');
     const exchangeResponse = await plaidClient.itemPublicTokenExchange({ public_token });
     const accessToken = exchangeResponse.data.access_token;
-
-    console.log('Token exchanged successfully for user', user.id);
+    console.log('Access token received:', !!accessToken);
 
     const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Save access token to Supabase
-    const { error } = await adminSupabase
+    console.log('Saving to Supabase...');
+    const { data, error } = await adminSupabase
       .from('bank_connections')
       .upsert({
         user_id: user.id,
@@ -47,12 +53,10 @@ export async function POST(request) {
         provider: 'plaid',
       }, { onConflict: 'user_id' });
 
-    if (error) {
-      console.error('Supabase insert error:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    console.log('Upsert result - data:', data, 'error:', error?.message);
 
-    console.log('Bank connection saved for user', user.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
     return NextResponse.json({ success: true });
 
   } catch (err) {
