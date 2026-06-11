@@ -77,6 +77,10 @@ export default function Dashboard() {
   const [bankConnected, setBankConnected] = useState(false);
   const [importing, setImporting] = useState(false);
   const [linkToken, setLinkToken] = useState(null);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [showSubForm, setShowSubForm] = useState(false);
+  const [subForm, setSubForm] = useState({ name: '', amount: '' });
+  const [subSaving, setSubSaving] = useState(false);
   const router = useRouter();
 
   const createLinkToken = async () => {
@@ -121,6 +125,8 @@ export default function Dashboard() {
       if (alerts) setAlertSettings(alerts);
       const { data: bankConn } = await supabase.from("bank_connections").select("id").eq("user_id", user.id).single();
       if (bankConn) setBankConnected(true);
+      const { data: subs } = await supabase.from("subscriptions").select("*").eq("user_id", user.id).eq("is_active", true);
+      if (subs) setSubscriptions(subs);
       setLoading(false);
     };
     init();
@@ -320,6 +326,45 @@ export default function Dashboard() {
     }
 
     return insights.slice(0, 6);
+  };
+
+  const getAutoDetectedSubs = () => {
+    const merchantCounts = {};
+    transactions.forEach(t => {
+      const key = t.description.toLowerCase().trim();
+      if (!merchantCounts[key]) merchantCounts[key] = [];
+      merchantCounts[key].push(t);
+    });
+    return Object.entries(merchantCounts)
+      .filter(([_, txns]) => txns.length >= 2)
+      .map(([name, txns]) => {
+        const amounts = txns.map(t => parseFloat(t.amount));
+        const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+        const isConsistent = Math.max(...amounts) - Math.min(...amounts) < 2;
+        return { name: txns[0].description, amount: avgAmount, consistent: isConsistent, count: txns.length };
+      })
+      .filter(s => s.consistent && s.amount < 100)
+      .sort((a, b) => b.amount - a.amount);
+  };
+
+  const handleAddSub = async () => {
+    if (!subForm.name.trim() || !subForm.amount) return;
+    setSubSaving(true);
+    const { data } = await supabase.from("subscriptions").insert({
+      user_id: user.id,
+      name: subForm.name.trim(),
+      amount: parseFloat(subForm.amount),
+      frequency: 'monthly',
+    }).select().single();
+    if (data) setSubscriptions(prev => [...prev, data]);
+    setSubForm({ name: '', amount: '' });
+    setShowSubForm(false);
+    setSubSaving(false);
+  };
+
+  const handleDeleteSub = async (id) => {
+    await supabase.from("subscriptions").update({ is_active: false }).eq("id", id);
+    setSubscriptions(prev => prev.filter(s => s.id !== id));
   };
 
   if (loading) return (
@@ -619,6 +664,85 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+        {/* Subscriptions */}
+        {(() => {
+          const autoSubs = getAutoDetectedSubs();
+          const manualTotal = subscriptions.reduce((s, sub) => s + parseFloat(sub.amount), 0);
+          const autoTotal = autoSubs.reduce((s, sub) => s + sub.amount, 0);
+          const totalSubSpend = manualTotal + autoTotal;
+          return (
+            <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'20px', flexWrap:'wrap', gap:'12px'}}>
+                <div>
+                  <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Recurring</p>
+                  <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'2px'}}>🔄 Subscriptions</h2>
+                  <p style={{fontSize:'13px', color:'#6b7280'}}>{fmt(totalSubSpend)}/month across {autoSubs.length + subscriptions.length} subscriptions</p>
+                </div>
+                <button onClick={() => setShowSubForm(!showSubForm)}
+                  style={{background:'#1a56db', color:'white', border:'none', borderRadius:'10px', padding:'10px 18px', fontSize:'14px', fontWeight:'600', cursor:'pointer'}}>
+                  + Add manually
+                </button>
+              </div>
+
+              {showSubForm && (
+                <div style={{background:'#f7f9ff', border:'1px solid #e8f0fe', borderRadius:'12px', padding:'16px', marginBottom:'20px', display:'flex', gap:'12px', flexWrap:'wrap', alignItems:'flex-end'}}>
+                  <div style={{flex:1, minWidth:'160px'}}>
+                    <label style={{fontSize:'12px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'6px'}}>Name</label>
+                    <input value={subForm.name} onChange={e => setSubForm(f => ({...f, name: e.target.value}))}
+                      placeholder="e.g. iCloud, Xbox Game Pass"
+                      style={{width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'10px 12px', fontSize:'14px', boxSizing:'border-box'}} />
+                  </div>
+                  <div style={{width:'120px'}}>
+                    <label style={{fontSize:'12px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'6px'}}>Monthly cost (£)</label>
+                    <input type="number" value={subForm.amount} onChange={e => setSubForm(f => ({...f, amount: e.target.value}))}
+                      placeholder="0.00"
+                      style={{width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'10px 12px', fontSize:'14px', boxSizing:'border-box'}} />
+                  </div>
+                  <button onClick={handleAddSub} disabled={subSaving}
+                    style={{background:'#1a56db', color:'white', border:'none', borderRadius:'8px', padding:'10px 18px', fontSize:'14px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap'}}>
+                    {subSaving ? 'Saving...' : 'Add'}
+                  </button>
+                  <button onClick={() => setShowSubForm(false)}
+                    style={{background:'#f3f4f6', color:'#374151', border:'none', borderRadius:'8px', padding:'10px 18px', fontSize:'14px', fontWeight:'600', cursor:'pointer'}}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              <div style={{display:'flex', flexDirection:'column', gap:'2px'}}>
+                {autoSubs.length === 0 && subscriptions.length === 0 && (
+                  <p style={{color:'#9ca3af', fontSize:'14px', textAlign:'center', padding:'20px 0'}}>No recurring payments detected yet. Add more transactions or add manually.</p>
+                )}
+                {autoSubs.map((sub, i) => (
+                  <div key={i} style={{display:'flex', alignItems:'center', gap:'12px', padding:'12px', borderRadius:'10px', background:'#f7f9ff', marginBottom:'6px'}}>
+                    <div style={{width:'36px', height:'36px', borderRadius:'10px', background:'#7C3AED18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0}}>🔄</div>
+                    <div style={{flex:1}}>
+                      <p style={{fontSize:'14px', fontWeight:'600', color:'#0a1628', marginBottom:'2px'}}>{sub.name}</p>
+                      <p style={{fontSize:'12px', color:'#6b7280'}}>Auto-detected · {sub.count} payments</p>
+                    </div>
+                    <span style={{fontSize:'15px', fontWeight:'700', color:'#0a1628'}}>{fmt(sub.amount)}/mo</span>
+                    <span style={{background:'#f0fdf4', color:'#16a34a', fontSize:'11px', fontWeight:'600', padding:'3px 8px', borderRadius:'20px'}}>Detected</span>
+                  </div>
+                ))}
+                {subscriptions.map(sub => (
+                  <div key={sub.id} style={{display:'flex', alignItems:'center', gap:'12px', padding:'12px', borderRadius:'10px', background:'#f0f5ff', marginBottom:'6px'}}>
+                    <div style={{width:'36px', height:'36px', borderRadius:'10px', background:'#1a56db18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0}}>📌</div>
+                    <div style={{flex:1}}>
+                      <p style={{fontSize:'14px', fontWeight:'600', color:'#0a1628', marginBottom:'2px'}}>{sub.name}</p>
+                      <p style={{fontSize:'12px', color:'#6b7280'}}>Added manually · monthly</p>
+                    </div>
+                    <span style={{fontSize:'15px', fontWeight:'700', color:'#0a1628'}}>{fmt(sub.amount)}/mo</span>
+                    <button onClick={() => handleDeleteSub(sub.id)}
+                      style={{background:'#fef2f2', border:'none', borderRadius:'6px', padding:'5px 10px', fontSize:'12px', color:'#dc2626', cursor:'pointer', fontWeight:'500'}}>
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Transactions */}
         <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
