@@ -60,6 +60,7 @@ function FloatingInsights({ insights }) {
     </div>
   );
 }
+
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [netPay, setNetPay] = useState(0);
@@ -294,21 +295,16 @@ export default function Dashboard() {
     const currentMonth = allMonths[0];
     const prevMonth = allMonths[1];
     if (!prevMonth || !currentMonth) return [];
-
     const getMonthCatTotal = (month, category) =>
       transactions.filter(t => t.date.startsWith(month) && t.category === category).reduce((s, t) => s + parseFloat(t.amount), 0);
-
     const currentTotal = transactions.filter(t => t.date.startsWith(currentMonth)).reduce((s, t) => s + parseFloat(t.amount), 0);
     const prevTotal = transactions.filter(t => t.date.startsWith(prevMonth)).reduce((s, t) => s + parseFloat(t.amount), 0);
     const overallChange = prevTotal > 0 ? Math.round(((currentTotal - prevTotal) / prevTotal) * 100) : 0;
     const formatMonth = (m) => new Date(m + '-01').toLocaleDateString('en-GB', { month: 'long' });
-
     const insights = [];
-
     if (overallChange > 10) insights.push({ icon: '📈', text: `Overall spending up ${overallChange}% vs ${formatMonth(prevMonth)}`, color: '#dc2626' });
     else if (overallChange < -10) insights.push({ icon: '📉', text: `Overall spending down ${Math.abs(overallChange)}% vs ${formatMonth(prevMonth)}`, color: '#16a34a' });
     else insights.push({ icon: '✅', text: `Spending is stable vs ${formatMonth(prevMonth)} (${overallChange > 0 ? '+' : ''}${overallChange}%)`, color: '#1a56db' });
-
     CATEGORIES.forEach(cat => {
       const curr = getMonthCatTotal(currentMonth, cat.name);
       const prev = getMonthCatTotal(prevMonth, cat.name);
@@ -319,12 +315,10 @@ export default function Dashboard() {
       if (curr > 0 && prev === 0) insights.push({ icon: '🆕', text: `New ${cat.name} spending this month — ${fmt(curr)}`, color: '#d97706' });
       if (curr === 0 && prev > 0) insights.push({ icon: '🎉', text: `No ${cat.name} this month — saved ${fmt(prev)} vs last month`, color: '#16a34a' });
     });
-
     const topCat = categoryTotals[0];
     if (topCat && netPay > 0 && (topCat.total / netPay) > 0.3) {
       insights.push({ icon: '💡', text: `${topCat.name} is your biggest expense at ${Math.round((topCat.total / netPay) * 100)}% of take-home`, color: '#d97706' });
     }
-
     return insights.slice(0, 6);
   };
 
@@ -409,13 +403,12 @@ export default function Dashboard() {
           <div className="desktop-nav" style={{display:'flex', alignItems:'center', gap:'12px'}}>
             <div style={{display:'flex', alignItems:'center', gap:'4px', background:'#f0f5ff', borderRadius:'12px', padding:'4px'}}>
               {[
- { href:'/', label:'Home', icon:'🏠' },
-{ href:'/calculator', label:'Calculator', icon:'💷' },
-{ href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-{ href:'/analytics', label:'Analytics', icon:'📈' },
-{ href: '/bills', label: 'Bills', icon: '🧾' },
-{ href:'/settings', label:'Settings', icon:'⚙️' },
-
+                { href:'/', label:'Home', icon:'🏠' },
+                { href:'/calculator', label:'Calculator', icon:'💷' },
+                { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+                { href:'/analytics', label:'Analytics', icon:'📈' },
+                { href:'/bills', label:'Bills', icon:'🧾' },
+                { href:'/settings', label:'Settings', icon:'⚙️' },
               ].map(tab => (
                 <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
                   <span>{tab.icon}</span>{tab.label}
@@ -436,12 +429,12 @@ export default function Dashboard() {
         {menuOpen && (
           <div className="mobile-menu" style={{borderTop:'1px solid #e8f0fe', marginTop:'12px', paddingTop:'12px'}}>
             {[
-{ href:'/', label:'Home', icon:'🏠' },
-{ href:'/calculator', label:'Calculator', icon:'💷' },
-{ href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-{ href:'/analytics', label:'Analytics', icon:'📈' },
-{ href: '/bills', label: 'Bills', icon: '🧾' },
-{ href:'/settings', label:'Settings', icon:'⚙️' },
+              { href:'/', label:'Home', icon:'🏠' },
+              { href:'/calculator', label:'Calculator', icon:'💷' },
+              { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+              { href:'/analytics', label:'Analytics', icon:'📈' },
+              { href:'/bills', label:'Bills', icon:'🧾' },
+              { href:'/settings', label:'Settings', icon:'⚙️' },
             ].map(tab => (
               <Link key={tab.href} href={tab.href} onClick={() => setMenuOpen(false)}
                 style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px 16px', borderRadius:'10px', fontSize:'15px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#0a1628', background: tab.active ? '#f0f5ff' : 'transparent', textDecoration:'none', marginBottom:'4px'}}>
@@ -492,7 +485,8 @@ export default function Dashboard() {
           <div>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'6px'}}>Finance Tracker</p>
             <h1 style={{fontSize:'32px', fontWeight:'800', color:'#0a1628', letterSpacing:'-0.5px', marginBottom:'6px'}}>Spending Dashboard</h1>
-<p style={{fontSize:'15px', color:'#6b7280'}}>Welcome back, {user?.user_metadata?.full_name || user?.email}</p>          </div>
+            <p style={{fontSize:'15px', color:'#6b7280'}}>Welcome back, {user?.user_metadata?.full_name || user?.email}</p>
+          </div>
           <div style={{display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap'}}>
             <div style={{display:'flex', alignItems:'center', gap:'8px', background:'white', border:'1px solid #e8f0fe', borderRadius:'12px', padding:'10px 16px', boxShadow:'0 2px 8px rgba(26,86,219,0.06)'}}>
               <span style={{fontSize:'13px', color:'#6b7280', fontWeight:'500'}}>Monthly take-home</span>
@@ -591,8 +585,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Category breakdown + pie chart with insights */}
-        <div className="dash-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px', marginBottom:'24px'}}>
+        {/* Category breakdown + pie chart + subscriptions */}
+        <div className="dash-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'24px', marginBottom:'24px'}}>
+
+          {/* Category breakdown */}
           <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Breakdown</p>
             <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>Spending by category</h2>
@@ -620,33 +616,104 @@ export default function Dashboard() {
             }
           </div>
 
+          {/* Pie chart */}
           <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Visual</p>
             <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>Spending breakdown</h2>
             {pieSlices.length === 0
               ? <p style={{color:'#9ca3af', fontSize:'14px'}}>No transactions yet</p>
-              : <>
-                  <div style={{display:'flex', gap:'20px', alignItems:'center', flexWrap:'wrap', marginBottom:'20px'}}>
-                    <svg viewBox="0 0 200 200" style={{width:'150px', height:'150px', flexShrink:0}}>
-                      {pieSlices.map((s, i) => <path key={i} d={s.d} fill={s.color} />)}
-                      <circle cx="100" cy="100" r="52" fill="white" />
-                      <text x="100" y="95" textAnchor="middle" fontSize="12" fill="#0a1628" fontWeight="800">{fmt(totalSpent)}</text>
-                      <text x="100" y="112" textAnchor="middle" fontSize="10" fill="#6b7280">total spent</text>
-                    </svg>
-                    <div style={{display:'flex', flexDirection:'column', gap:'8px', flex:1}}>
-                      {pieSlices.map((s, i) => (
-                        <div key={i} style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                          <div style={{width:'10px', height:'10px', borderRadius:'3px', background:s.color, flexShrink:0}}></div>
-                          <span style={{fontSize:'12px', color:'#4a5568', flex:1}}>{s.name}</span>
-                          <span style={{fontSize:'12px', fontWeight:'700', color:'#0a1628'}}>{s.pct}%</span>
-                        </div>
-                      ))}
-                    </div>
+              : <div style={{display:'flex', gap:'20px', alignItems:'center', flexWrap:'wrap', marginBottom:'20px'}}>
+                  <svg viewBox="0 0 200 200" style={{width:'150px', height:'150px', flexShrink:0}}>
+                    {pieSlices.map((s, i) => <path key={i} d={s.d} fill={s.color} />)}
+                    <circle cx="100" cy="100" r="52" fill="white" />
+                    <text x="100" y="95" textAnchor="middle" fontSize="12" fill="#0a1628" fontWeight="800">{fmt(totalSpent)}</text>
+                    <text x="100" y="112" textAnchor="middle" fontSize="10" fill="#6b7280">total spent</text>
+                  </svg>
+                  <div style={{display:'flex', flexDirection:'column', gap:'8px', flex:1}}>
+                    {pieSlices.map((s, i) => (
+                      <div key={i} style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                        <div style={{width:'10px', height:'10px', borderRadius:'3px', background:s.color, flexShrink:0}}></div>
+                        <span style={{fontSize:'12px', color:'#4a5568', flex:1}}>{s.name}</span>
+                        <span style={{fontSize:'12px', fontWeight:'700', color:'#0a1628'}}>{s.pct}%</span>
+                      </div>
+                    ))}
                   </div>
-
-                </>
+                </div>
             }
           </div>
+
+          {/* Subscriptions */}
+          {(() => {
+            const autoSubs = getAutoDetectedSubs();
+            const manualTotal = subscriptions.reduce((s, sub) => s + parseFloat(sub.amount), 0);
+            const autoTotal = autoSubs.reduce((s, sub) => s + sub.amount, 0);
+            const totalSubSpend = manualTotal + autoTotal;
+            return (
+              <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px', gap:'8px'}}>
+                  <div>
+                    <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Recurring</p>
+                    <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'2px'}}>🔄 Subscriptions</h2>
+                    <p style={{fontSize:'12px', color:'#6b7280'}}>{fmt(totalSubSpend)}/mo · {autoSubs.length + subscriptions.length} found</p>
+                  </div>
+                  <button onClick={() => setShowSubForm(!showSubForm)}
+                    style={{background:'#1a56db', color:'white', border:'none', borderRadius:'10px', padding:'8px 14px', fontSize:'13px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap'}}>
+                    + Add
+                  </button>
+                </div>
+                {showSubForm && (
+                  <div style={{background:'#f7f9ff', border:'1px solid #e8f0fe', borderRadius:'12px', padding:'12px', marginBottom:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
+                    <input value={subForm.name} onChange={e => setSubForm(f => ({...f, name: e.target.value}))}
+                      placeholder="Name (e.g. iCloud)"
+                      style={{width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'9px 12px', fontSize:'13px', boxSizing:'border-box'}} />
+                    <input type="number" value={subForm.amount} onChange={e => setSubForm(f => ({...f, amount: e.target.value}))}
+                      placeholder="Monthly cost (£)"
+                      style={{width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'9px 12px', fontSize:'13px', boxSizing:'border-box'}} />
+                    <div style={{display:'flex', gap:'8px'}}>
+                      <button onClick={handleAddSub} disabled={subSaving}
+                        style={{flex:1, background:'#1a56db', color:'white', border:'none', borderRadius:'8px', padding:'9px', fontSize:'13px', fontWeight:'600', cursor:'pointer'}}>
+                        {subSaving ? 'Saving...' : 'Add'}
+                      </button>
+                      <button onClick={() => setShowSubForm(false)}
+                        style={{flex:1, background:'#f3f4f6', color:'#374151', border:'none', borderRadius:'8px', padding:'9px', fontSize:'13px', fontWeight:'600', cursor:'pointer'}}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'320px', overflowY:'auto'}}>
+                  {autoSubs.length === 0 && subscriptions.length === 0 && (
+                    <p style={{color:'#9ca3af', fontSize:'13px', textAlign:'center', padding:'16px 0'}}>No recurring payments detected yet.</p>
+                  )}
+                  {autoSubs.map((sub, i) => (
+                    <div key={i} style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px', borderRadius:'10px', background:'#f7f9ff'}}>
+                      <span style={{fontSize:'16px'}}>🔄</span>
+                      <div style={{flex:1, minWidth:0}}>
+                        <p style={{fontSize:'13px', fontWeight:'600', color:'#0a1628', marginBottom:'1px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{sub.name}</p>
+                        <p style={{fontSize:'11px', color:'#6b7280'}}>{sub.count} payments detected</p>
+                      </div>
+                      <span style={{fontSize:'13px', fontWeight:'700', color:'#0a1628', whiteSpace:'nowrap'}}>{fmt(sub.amount)}</span>
+                    </div>
+                  ))}
+                  {subscriptions.map(sub => (
+                    <div key={sub.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px', borderRadius:'10px', background:'#f0f5ff'}}>
+                      <span style={{fontSize:'16px'}}>📌</span>
+                      <div style={{flex:1, minWidth:0}}>
+                        <p style={{fontSize:'13px', fontWeight:'600', color:'#0a1628', marginBottom:'1px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{sub.name}</p>
+                        <p style={{fontSize:'11px', color:'#6b7280'}}>Manual · monthly</p>
+                      </div>
+                      <span style={{fontSize:'13px', fontWeight:'700', color:'#0a1628', whiteSpace:'nowrap'}}>{fmt(sub.amount)}</span>
+                      <button onClick={() => handleDeleteSub(sub.id)}
+                        style={{background:'#fef2f2', border:'none', borderRadius:'6px', padding:'4px 8px', fontSize:'11px', color:'#dc2626', cursor:'pointer', fontWeight:'500', flexShrink:0}}>
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
         </div>
 
         {/* Spending Insights */}
@@ -664,85 +731,6 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-
-        {/* Subscriptions */}
-        {(() => {
-          const autoSubs = getAutoDetectedSubs();
-          const manualTotal = subscriptions.reduce((s, sub) => s + parseFloat(sub.amount), 0);
-          const autoTotal = autoSubs.reduce((s, sub) => s + sub.amount, 0);
-          const totalSubSpend = manualTotal + autoTotal;
-          return (
-            <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'20px', flexWrap:'wrap', gap:'12px'}}>
-                <div>
-                  <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Recurring</p>
-                  <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'2px'}}>🔄 Subscriptions</h2>
-                  <p style={{fontSize:'13px', color:'#6b7280'}}>{fmt(totalSubSpend)}/month across {autoSubs.length + subscriptions.length} subscriptions</p>
-                </div>
-                <button onClick={() => setShowSubForm(!showSubForm)}
-                  style={{background:'#1a56db', color:'white', border:'none', borderRadius:'10px', padding:'10px 18px', fontSize:'14px', fontWeight:'600', cursor:'pointer'}}>
-                  + Add manually
-                </button>
-              </div>
-
-              {showSubForm && (
-                <div style={{background:'#f7f9ff', border:'1px solid #e8f0fe', borderRadius:'12px', padding:'16px', marginBottom:'20px', display:'flex', gap:'12px', flexWrap:'wrap', alignItems:'flex-end'}}>
-                  <div style={{flex:1, minWidth:'160px'}}>
-                    <label style={{fontSize:'12px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'6px'}}>Name</label>
-                    <input value={subForm.name} onChange={e => setSubForm(f => ({...f, name: e.target.value}))}
-                      placeholder="e.g. iCloud, Xbox Game Pass"
-                      style={{width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'10px 12px', fontSize:'14px', boxSizing:'border-box'}} />
-                  </div>
-                  <div style={{width:'120px'}}>
-                    <label style={{fontSize:'12px', fontWeight:'600', color:'#374151', display:'block', marginBottom:'6px'}}>Monthly cost (£)</label>
-                    <input type="number" value={subForm.amount} onChange={e => setSubForm(f => ({...f, amount: e.target.value}))}
-                      placeholder="0.00"
-                      style={{width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'10px 12px', fontSize:'14px', boxSizing:'border-box'}} />
-                  </div>
-                  <button onClick={handleAddSub} disabled={subSaving}
-                    style={{background:'#1a56db', color:'white', border:'none', borderRadius:'8px', padding:'10px 18px', fontSize:'14px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap'}}>
-                    {subSaving ? 'Saving...' : 'Add'}
-                  </button>
-                  <button onClick={() => setShowSubForm(false)}
-                    style={{background:'#f3f4f6', color:'#374151', border:'none', borderRadius:'8px', padding:'10px 18px', fontSize:'14px', fontWeight:'600', cursor:'pointer'}}>
-                    Cancel
-                  </button>
-                </div>
-              )}
-
-              <div style={{display:'flex', flexDirection:'column', gap:'2px'}}>
-                {autoSubs.length === 0 && subscriptions.length === 0 && (
-                  <p style={{color:'#9ca3af', fontSize:'14px', textAlign:'center', padding:'20px 0'}}>No recurring payments detected yet. Add more transactions or add manually.</p>
-                )}
-                {autoSubs.map((sub, i) => (
-                  <div key={i} style={{display:'flex', alignItems:'center', gap:'12px', padding:'12px', borderRadius:'10px', background:'#f7f9ff', marginBottom:'6px'}}>
-                    <div style={{width:'36px', height:'36px', borderRadius:'10px', background:'#7C3AED18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0}}>🔄</div>
-                    <div style={{flex:1}}>
-                      <p style={{fontSize:'14px', fontWeight:'600', color:'#0a1628', marginBottom:'2px'}}>{sub.name}</p>
-                      <p style={{fontSize:'12px', color:'#6b7280'}}>Auto-detected · {sub.count} payments</p>
-                    </div>
-                    <span style={{fontSize:'15px', fontWeight:'700', color:'#0a1628'}}>{fmt(sub.amount)}/mo</span>
-                    <span style={{background:'#f0fdf4', color:'#16a34a', fontSize:'11px', fontWeight:'600', padding:'3px 8px', borderRadius:'20px'}}>Detected</span>
-                  </div>
-                ))}
-                {subscriptions.map(sub => (
-                  <div key={sub.id} style={{display:'flex', alignItems:'center', gap:'12px', padding:'12px', borderRadius:'10px', background:'#f0f5ff', marginBottom:'6px'}}>
-                    <div style={{width:'36px', height:'36px', borderRadius:'10px', background:'#1a56db18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0}}>📌</div>
-                    <div style={{flex:1}}>
-                      <p style={{fontSize:'14px', fontWeight:'600', color:'#0a1628', marginBottom:'2px'}}>{sub.name}</p>
-                      <p style={{fontSize:'12px', color:'#6b7280'}}>Added manually · monthly</p>
-                    </div>
-                    <span style={{fontSize:'15px', fontWeight:'700', color:'#0a1628'}}>{fmt(sub.amount)}/mo</span>
-                    <button onClick={() => handleDeleteSub(sub.id)}
-                      style={{background:'#fef2f2', border:'none', borderRadius:'6px', padding:'5px 10px', fontSize:'12px', color:'#dc2626', cursor:'pointer', fontWeight:'500'}}>
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
 
         {/* Transactions */}
         <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
@@ -808,21 +796,23 @@ export default function Dashboard() {
               </div>
           }
         </div>
+
       </div>
 
-{/* Floating insights popup */}
+      {/* Floating insights popup */}
       {transactions.length > 0 && (
         <FloatingInsights insights={getInsights()} />
       )}
+
       {/* Mobile bottom tabs */}
       <div className="mobile-bottom-nav" style={{position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #e8f0fe', display:'none', padding:'8px 0 20px', zIndex:100}}>
         {[
-{ href:'/', label:'Home', icon:'🏠' },
-{ href:'/calculator', label:'Calculator', icon:'💷' },
-{ href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
-{ href:'/analytics', label:'Analytics', icon:'📈' },
-{ href: '/bills', label: 'Bills', icon: '🧾' },
-{ href:'/settings', label:'Settings', icon:'⚙️' },
+          { href:'/', label:'Home', icon:'🏠' },
+          { href:'/calculator', label:'Calculator', icon:'💷' },
+          { href:'/dashboard', label:'Dashboard', icon:'📊', active:true },
+          { href:'/analytics', label:'Analytics', icon:'📈' },
+          { href:'/bills', label:'Bills', icon:'🧾' },
+          { href:'/settings', label:'Settings', icon:'⚙️' },
         ].map(tab => (
           <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>
             <span style={{fontSize:'22px'}}>{tab.icon}</span>
