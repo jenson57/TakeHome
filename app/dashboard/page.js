@@ -586,7 +586,7 @@ export default function Dashboard() {
         </div>
 
         {/* Category breakdown + pie chart + subscriptions */}
-        <div className="dash-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'24px', marginBottom:'24px', alignItems:'stretch'}}>
+        <div className="dash-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'24px', marginBottom:'24px'}}>
 
           {/* Category breakdown */}
           <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
@@ -617,19 +617,19 @@ export default function Dashboard() {
           </div>
 
           {/* Pie chart */}
-          <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)', display:'flex', flexDirection:'column'}}>
+          <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
             <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Visual</p>
             <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'20px'}}>Spending breakdown</h2>
             {pieSlices.length === 0
               ? <p style={{color:'#9ca3af', fontSize:'14px'}}>No transactions yet</p>
-              : <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, gap:'20px'}}>
-                  <svg viewBox="0 0 200 200" style={{width:'160px', height:'160px', flexShrink:0}}>
+              : <>
+                  <svg viewBox="0 0 200 200" style={{width:'100%', height:'220px', display:'block'}}>
                     {pieSlices.map((s, i) => <path key={i} d={s.d} fill={s.color} />)}
                     <circle cx="100" cy="100" r="52" fill="white" />
                     <text x="100" y="95" textAnchor="middle" fontSize="12" fill="#0a1628" fontWeight="800">{fmt(totalSpent)}</text>
                     <text x="100" y="112" textAnchor="middle" fontSize="10" fill="#6b7280">total spent</text>
                   </svg>
-                  <div style={{display:'flex', flexDirection:'column', gap:'8px', width:'100%'}}>
+                  <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'180px', overflowY:'auto', marginTop:'16px'}}>
                     {pieSlices.map((s, i) => (
                       <div key={i} style={{display:'flex', alignItems:'center', gap:'8px'}}>
                         <div style={{width:'10px', height:'10px', borderRadius:'3px', background:s.color, flexShrink:0}}></div>
@@ -638,7 +638,7 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </>
             }
           </div>
 
@@ -649,7 +649,7 @@ export default function Dashboard() {
             const autoTotal = autoSubs.reduce((s, sub) => s + sub.amount, 0);
             const totalSubSpend = manualTotal + autoTotal;
             return (
-              <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)', display:'flex', flexDirection:'column'}}>
+              <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px', gap:'8px'}}>
                   <div>
                     <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Recurring</p>
@@ -681,7 +681,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
-                <div style={{display:'flex', flexDirection:'column', gap:'6px', flex:1, overflowY:'auto'}}>
+                <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'320px', overflowY:'auto'}}>
                   {autoSubs.length === 0 && subscriptions.length === 0 && (
                     <p style={{color:'#9ca3af', fontSize:'13px', textAlign:'center', padding:'16px 0'}}>No recurring payments detected yet.</p>
                   )}
