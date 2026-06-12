@@ -24,6 +24,7 @@ const TABS = [
 { href:'/dashboard', label:'Dashboard', icon:'📊' },
 { href:'/analytics', label:'Analytics', icon:'📈' },
 { href: '/bills', label: 'Bills', icon: '🧾' },
+{ href: '/budget', label: 'Budget', icon: '💬' },
 { href:'/settings', label:'Settings', icon:'⚙️' },
 ];
 
@@ -103,6 +104,7 @@ export default function CalculatorPage() {
 { href:'/dashboard', label:'Dashboard', icon:'📊' },
 { href:'/analytics', label:'Analytics', icon:'📈' },
 { href: '/bills', label: 'Bills', icon: '🧾' },
+{ href: '/budget', label: 'Budget', icon: '💬' },
 { href:'/settings', label:'Settings', icon:'⚙️' },
         ].map(tab => (
           <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>

@@ -107,6 +107,7 @@ export default function Analytics() {
     { href:'/dashboard', label:'Dashboard', icon:'📊' },
     { href:'/analytics', label:'Analytics', icon:'📈', active:true },
     { href: '/bills', label: 'Bills', icon: '🧾' },
+    { href: '/budget', label: 'Budget', icon: '💬' },
     { href:'/settings', label:'Settings', icon:'⚙️' },
   ];
 

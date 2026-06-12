@@ -23,6 +23,7 @@ const TABS = [
 { href:'/dashboard', label:'Dashboard', icon:'📊' },
 { href:'/analytics', label:'Analytics', icon:'📈' },
 { href: '/bills', label: 'Bills', icon: '🧾' },
+{ href: '/budget', label: 'Budget', icon: '💬' },
 { href:'/settings', label:'Settings', icon:'⚙️' , active:true},
 ];
 
