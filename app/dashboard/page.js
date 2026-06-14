@@ -415,6 +415,7 @@ export default function Dashboard() {
                 { href:'/analytics', label:'Analytics', icon:'📈' },
                 { href:'/bills', label:'Bills', icon:'🧾' },
                 { href: '/budget', label: 'Budget', icon: '💬' },
+                { href: '/debt', label: 'Debt', icon: '💳' },
                 { href:'/settings', label:'Settings', icon:'⚙️' },
               ].map(tab => (
                 <Link key={tab.href} href={tab.href} style={{display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'9px', fontSize:'14px', fontWeight: tab.active ? '700' : '500', color: tab.active ? '#1a56db' : '#6b7280', background: tab.active ? 'white' : 'transparent', textDecoration:'none', boxShadow: tab.active ? '0 1px 4px rgba(26,86,219,0.12)' : 'none'}}>
@@ -442,6 +443,7 @@ export default function Dashboard() {
               { href:'/analytics', label:'Analytics', icon:'📈' },
               { href:'/bills', label:'Bills', icon:'🧾' },
               { href: '/budget', label: 'Budget', icon: '💬' },
+              { href: '/debt', label: 'Debt', icon: '💳' },
               { href:'/settings', label:'Settings', icon:'⚙️' },
             ].map(tab => (
               <Link key={tab.href} href={tab.href} onClick={() => setMenuOpen(false)}
@@ -821,6 +823,7 @@ export default function Dashboard() {
           { href:'/analytics', label:'Analytics', icon:'📈' },
           { href:'/bills', label:'Bills', icon:'🧾' },
           { href: '/budget', label: 'Budget', icon: '💬' },
+          { href: '/debt', label: 'Debt', icon: '💳' },
           { href:'/settings', label:'Settings', icon:'⚙️' },
         ].map(tab => (
           <Link key={tab.href} href={tab.href} style={{flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', textDecoration:'none', padding:'4px 0'}}>

@@ -11,6 +11,7 @@ const NAV_TABS = [
   { href: '/analytics', label: 'Analytics', icon: '📈' },
   { href: '/bills', label: 'Bills', icon: '🧾' },
   { href: '/budget', label: 'Budget', icon: '💬' },
+  { href: '/debt', label: 'Debt', icon: '💳' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -118,13 +119,11 @@ Keep responses focused and actionable. Use markdown formatting with **bold** for
         conversationMessages.push({ role: 'user', content: text });
       }
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/budget/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          system: systemPrompt,
+          systemPrompt,
           messages: conversationMessages,
         }),
       });

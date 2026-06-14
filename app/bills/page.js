@@ -13,6 +13,7 @@ const NAV_TABS = [
   { href: '/analytics', label: 'Analytics', icon: '📈' },
   { href: '/bills', label: 'Bills', icon: '🧾' },
   { href: '/budget', label: 'Budget', icon: '💬' },
+  { href: '/debt', label: 'Debt', icon: '💳' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 
