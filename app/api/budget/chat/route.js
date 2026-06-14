@@ -20,6 +20,11 @@ export async function POST(request) {
     });
 
     const data = await response.json();
+    console.log('Anthropic response status:', response.status);
+    console.log('Anthropic response:', JSON.stringify(data));
+    if (data.error) {
+      return NextResponse.json({ error: data.error.message }, { status: 500 });
+    }
     return NextResponse.json(data);
   } catch (err) {
     console.error('Budget chat error:', err.message);
