@@ -135,7 +135,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("budget_settings").upsert({ user_id: user.id, net_pay: netPay }, { onConflict: "user_id" });
+    if (netPay === 0) return;
+    const save = async () => {
+      const { error } = await supabase.from("budget_settings").upsert({ user_id: user.id, net_pay: netPay }, { onConflict: "user_id" });
+      if (error) console.error('Budget save error:', error.message);
+      else console.log('Budget saved:', netPay);
+    };
+    save();
   }, [netPay, user]);
 
   const handleSignOut = async () => {

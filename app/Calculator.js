@@ -1,16 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
-
-const COLORS = ["#534AB7","#1D9E75","#D85A30","#D4537E","#6B8ADD","#378ADD","#639922","#BA7517","#E24B4A","#7F77DD"];
-
-const DEFAULT_CATEGORIES = [
-  { name: "Housing / rent", pct: 30 },
-  { name: "Food & groceries", pct: 12 },
-  { name: "Transport & fuel", pct: 8 },
-  { name: "Social & eating out", pct: 8 },
-  { name: "Savings", pct: 10 },
-  { name: "Subscriptions", pct: 5 },
-];
+import { useState } from "react";
 
 function calcTax(gross) {
   const pa = 12570, basic = 50270, higher = 125140;
@@ -37,17 +26,31 @@ function fmt(n) {
   return "£" + Math.abs(Math.round(n)).toLocaleString("en-GB");
 }
 
+function freqLabel(f) {
+  if (f === "hourly") return "hour";
+  if (f === 1) return "year";
+  if (f === 52) return "week";
+  if (f === 26) return "fortnight";
+  return "month";
+}
+
+const card = {
+  background: 'white',
+  border: '1px solid #e8f0fe',
+  borderRadius: 16,
+  boxShadow: '0 2px 8px rgba(26,86,219,0.04)',
+  padding: '24px',
+  marginBottom: 20,
+};
+
 export default function Calculator() {
   const [incomes, setIncomes] = useState([
-    { id: 0, label: "Primary income", amount: 0, freq: "", hoursPerWeek: 40 }
+    { id: 0, label: "Primary income", amount: "", freq: "", hoursPerWeek: 40 }
   ]);
   const [displayFreq, setDisplayFreq] = useState(12);
-  const [categories, setCategories] = useState(
-    DEFAULT_CATEGORIES.map((c, i) => ({ ...c, id: i, amount: 0 }))
-  );
 
   const totalAnnualGross = incomes.reduce((s, inc) =>
-    s + toAnnual(parseFloat(inc.amount) || 0, inc.freq, inc.hoursPerWeek), 0);
+    s + toAnnual(parseFloat(inc.amount) || 0, inc.freq || 12, inc.hoursPerWeek), 0);
 
   const totalTax = calcTax(totalAnnualGross);
   const totalNI = calcNI(totalAnnualGross);
@@ -57,88 +60,34 @@ export default function Calculator() {
   const periodGross = totalAnnualGross / displayFreq;
   const periodTax = totalTax / displayFreq;
   const periodNI = totalNI / displayFreq;
+  const effectiveRate = totalAnnualGross > 0 ? Math.round(((totalTax + totalNI) / totalAnnualGross) * 100) : 0;
 
-  useEffect(() => {
-    setCategories(prev =>
-      prev.map(c => ({ ...c, amount: Math.round(periodNet * (c.pct / 100)) }))
-    );
-  }, [totalAnnualGross, displayFreq]);
-
-  const total = categories.reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
-  const remaining = periodNet - total;
-  const pct = periodNet > 0 ? Math.round((total / periodNet) * 100) : 0;
-
-  const pieSlices = () => {
-    const items = categories
-      .filter(c => parseFloat(c.amount) > 0)
-      .map((c, i) => ({ name: c.name, value: parseFloat(c.amount), color: COLORS[i % COLORS.length] }));
-    if (remaining > 0) items.push({ name: "Unallocated", value: remaining, color: "#E5E5E0" });
-    const total2 = items.reduce((s, i) => s + i.value, 0);
-    if (total2 <= 0) return [];
-    let cumulative = 0;
-    return items.map(item => {
-      const share = item.value / total2;
-      const start = cumulative;
-      cumulative += share;
-      const startAngle = start * 2 * Math.PI - Math.PI / 2;
-      const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
-      const r = 80, cx = 100, cy = 100;
-      const x1 = cx + r * Math.cos(startAngle);
-      const y1 = cy + r * Math.sin(startAngle);
-      const x2 = cx + r * Math.cos(endAngle);
-      const y2 = cy + r * Math.sin(endAngle);
-      const largeArc = share > 0.5 ? 1 : 0;
-      return { ...item, d: `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc} 1 ${x2},${y2} Z`, share };
-    });
-  };
-
-  const updateIncome = (id, field, value) => {
+  const updateIncome = (id, field, value) =>
     setIncomes(prev => prev.map(inc => inc.id === id ? { ...inc, [field]: value } : inc));
-  };
 
-  const addIncome = () => {
-    setIncomes(prev => [...prev, { id: Date.now(), label: `Income ${prev.length + 1}`, amount: 0, freq: "", hoursPerWeek: 40 }]);
-  };
+  const addIncome = () =>
+    setIncomes(prev => [...prev, { id: Date.now(), label: `Income ${prev.length + 1}`, amount: "", freq: "", hoursPerWeek: 40 }]);
 
   const removeIncome = (id) => {
     if (incomes.length === 1) return;
     setIncomes(prev => prev.filter(inc => inc.id !== id));
   };
 
-  const updateAmount = (id, val) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, amount: val } : c));
-  };
-
-  const removeCategory = (id) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
-  };
-
-  const addCategory = () => {
-    const name = prompt("Category name:");
-    if (name && name.trim()) {
-      setCategories(prev => [...prev, { name: name.trim(), pct: 5, amount: Math.round(periodNet * 0.05), id: Date.now() }]);
-    }
-  };
-
-  const freqLabel = (f) => {
-    if (f === "hourly") return "hour";
-    if (f === 1) return "year";
-    if (f === 52) return "week";
-    if (f === 26) return "fortnight";
-    return "month";
-  };
+  const displayLabel = displayFreq === 12 ? 'month' : displayFreq === 52 ? 'week' : 'fortnight';
 
   return (
-    <div className="space-y-4">
-
-      {/* Income card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-medium text-black">Your income</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-black">Show per</span>
+    <div>
+      {/* Income sources */}
+      <div style={card}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, flexWrap:'wrap', gap:12}}>
+          <div>
+            <p style={{fontSize:13, fontWeight:600, color:'#1a56db', textTransform:'uppercase', letterSpacing:1, marginBottom:4}}>Income</p>
+            <h2 style={{fontSize:18, fontWeight:800, color:'#0a1628'}}>Your earnings</h2>
+          </div>
+          <div style={{display:'flex', alignItems:'center', gap:8}}>
+            <span style={{fontSize:13, color:'#6b7280', fontWeight:500}}>Show per</span>
             <select value={displayFreq} onChange={e => setDisplayFreq(parseInt(e.target.value))}
-              className="border border-gray-200 rounded-lg px-2 py-1 text-sm bg-white text-black">
+              style={{border:'1px solid #e8f0fe', borderRadius:8, padding:'6px 10px', fontSize:13, color:'#0a1628', background:'white', outline:'none'}}>
               <option value={12}>Month</option>
               <option value={52}>Week</option>
               <option value={26}>Fortnight</option>
@@ -146,26 +95,29 @@ export default function Calculator() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div style={{display:'flex', flexDirection:'column', gap:12}}>
           {incomes.map((inc) => (
-            <div key={inc.id} className="bg-gray-50 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
+            <div key={inc.id} style={{background:'#f7f9ff', borderRadius:12, padding:16, border:'1px solid #e8f0fe'}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
                 <input
                   value={inc.label}
                   onChange={e => updateIncome(inc.id, "label", e.target.value)}
-                  className="font-medium text-black bg-transparent border-none outline-none text-sm w-40"
+                  style={{fontWeight:700, fontSize:14, color:'#0a1628', background:'transparent', border:'none', outline:'none'}}
                 />
                 {incomes.length > 1 && (
-                  <button onClick={() => removeIncome(inc.id)} className="text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+                  <button onClick={() => removeIncome(inc.id)}
+                    style={{background:'#fef2f2', border:'none', borderRadius:6, padding:'4px 8px', fontSize:12, color:'#dc2626', cursor:'pointer', fontWeight:600}}>
+                    Remove
+                  </button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
                 <div>
-                  <label className="text-xs text-black mb-1 block">Pay type</label>
+                  <label style={{fontSize:12, color:'#6b7280', fontWeight:600, display:'block', marginBottom:6}}>Pay type</label>
                   <select value={inc.freq} onChange={e => {
                     const val = e.target.value === "hourly" ? "hourly" : e.target.value === "" ? "" : parseInt(e.target.value);
                     updateIncome(inc.id, "freq", val);
-                  }} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white text-black">
+                  }} style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:8, padding:'9px 12px', fontSize:13, color:'#0a1628', background:'white', outline:'none', boxSizing:'border-box'}}>
                     <option value="" disabled>Select pay type</option>
                     <option value={1}>Yearly salary</option>
                     <option value={12}>Monthly salary</option>
@@ -175,112 +127,139 @@ export default function Calculator() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-black mb-1 block">
+                  <label style={{fontSize:12, color:'#6b7280', fontWeight:600, display:'block', marginBottom:6}}>
                     Amount (£/{freqLabel(inc.freq)})
                   </label>
                   <input
                     type="number"
+                    placeholder="0"
                     value={inc.amount}
-                    onChange={e => updateIncome(inc.id, "amount", parseFloat(e.target.value) || 0)}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-black"
+                    onChange={e => updateIncome(inc.id, "amount", e.target.value)}
+                    style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:8, padding:'9px 12px', fontSize:13, color:'#0a1628', outline:'none', boxSizing:'border-box'}}
                   />
                 </div>
                 {inc.freq === "hourly" && (
                   <div>
-                    <label className="text-xs text-black mb-1 block">Hours per week</label>
+                    <label style={{fontSize:12, color:'#6b7280', fontWeight:600, display:'block', marginBottom:6}}>Hours per week</label>
                     <input
                       type="number"
                       value={inc.hoursPerWeek}
                       onChange={e => updateIncome(inc.id, "hoursPerWeek", parseFloat(e.target.value) || 0)}
-                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-black"
+                      style={{width:'100%', border:'1px solid #e8f0fe', borderRadius:8, padding:'9px 12px', fontSize:13, color:'#0a1628', outline:'none', boxSizing:'border-box'}}
                     />
                   </div>
                 )}
               </div>
-              <div className="flex gap-4 mt-2 flex-wrap">
-                <p className="text-xs text-black">Annual: £{Math.round(toAnnual(inc.amount, inc.freq, inc.hoursPerWeek)).toLocaleString("en-GB")}</p>
-                <p className="text-xs text-black">Net monthly: £{Math.round((toAnnual(inc.amount, inc.freq, inc.hoursPerWeek) - calcTax(toAnnual(inc.amount, inc.freq, inc.hoursPerWeek)) - calcNI(toAnnual(inc.amount, inc.freq, inc.hoursPerWeek))) / 12).toLocaleString("en-GB")}</p>
-                <p className="text-xs text-black">Hourly equivalent: £{(toAnnual(inc.amount, inc.freq, inc.hoursPerWeek) / 52 / (inc.hoursPerWeek || 40)).toFixed(2)}</p>
-              </div>
+              {(parseFloat(inc.amount) > 0) && (
+                <div style={{display:'flex', gap:16, marginTop:10, flexWrap:'wrap'}}>
+                  <span style={{fontSize:12, color:'#6b7280'}}>Annual: <strong style={{color:'#0a1628'}}>£{Math.round(toAnnual(inc.amount, inc.freq || 12, inc.hoursPerWeek)).toLocaleString('en-GB')}</strong></span>
+                  <span style={{fontSize:12, color:'#6b7280'}}>Net/mo: <strong style={{color:'#16a34a'}}>£{Math.round((toAnnual(inc.amount, inc.freq || 12, inc.hoursPerWeek) - calcTax(toAnnual(inc.amount, inc.freq || 12, inc.hoursPerWeek)) - calcNI(toAnnual(inc.amount, inc.freq || 12, inc.hoursPerWeek))) / 12).toLocaleString('en-GB')}</strong></span>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
-        <button onClick={addIncome} className="mt-4 text-sm text-blue-600 hover:text-blue-800">+ Add another income</button>
+        <button onClick={addIncome}
+          style={{marginTop:14, background:'none', border:'1px dashed #1a56db', borderRadius:8, padding:'8px 16px', fontSize:13, color:'#1a56db', cursor:'pointer', fontWeight:600, width:'100%'}}>
+          + Add another income source
+        </button>
+      </div>
 
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          {[
-            ["Gross pay", fmt(periodGross), "text-black"],
-            ["Income tax", "-" + fmt(periodTax), "text-black"],
-            ["Nat. insurance", "-" + fmt(periodNI), "text-black"],
-            ["Take-home", fmt(periodNet), "text-green-600"]
-          ].map(([label, value, color]) => (
-            <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
-              <p className="text-xs text-black mb-1">{label}</p>
-              <p className={`font-medium text-sm ${color}`}>{value}</p>
+      {/* Results */}
+      {totalAnnualGross > 0 && (
+        <>
+          {/* Main result */}
+          <div style={{...card, background:'linear-gradient(135deg, #1a56db, #0e3fa8)', border:'none'}}>
+            <p style={{fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.7)', textTransform:'uppercase', letterSpacing:1, marginBottom:8}}>Your take-home pay</p>
+            <div style={{display:'flex', alignItems:'baseline', gap:8, marginBottom:4}}>
+              <span style={{fontSize:48, fontWeight:800, color:'white', letterSpacing:'-1px'}}>{fmt(periodNet)}</span>
+              <span style={{fontSize:16, color:'rgba(255,255,255,0.7)', fontWeight:500}}>per {displayLabel}</span>
             </div>
-          ))}
-        </div>
-      </div>
+            <p style={{fontSize:13, color:'rgba(255,255,255,0.6)', marginTop:4}}>{fmt(totalAnnualNet)} per year · {effectiveRate}% effective tax rate</p>
+          </div>
 
-      {/* Budget card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <h2 className="font-medium text-black mb-4">Budget categories</h2>
-        <div className="space-y-3">
-          {categories.map((cat) => (
-            <div key={cat.id} className="flex items-center gap-3">
-              <span className="text-sm text-black w-36 shrink-0">{cat.name}</span>
-              <input type="range" min={0} max={Math.max(1, Math.round(periodNet * 1.5))} step={1}
-                value={parseFloat(cat.amount) || 0}
-                onChange={e => updateAmount(cat.id, parseFloat(e.target.value))}
-                className="flex-1 min-w-0" />
-              <input type="number" min={0} value={cat.amount}
-                onChange={e => updateAmount(cat.id, parseFloat(e.target.value) || 0)}
-                className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-sm text-right text-black shrink-0" />
-              <button onClick={() => removeCategory(cat.id)} className="text-gray-300 hover:text-red-400 text-lg leading-none shrink-0">×</button>
+          {/* Breakdown */}
+          <div style={card}>
+            <p style={{fontSize:13, fontWeight:600, color:'#1a56db', textTransform:'uppercase', letterSpacing:1, marginBottom:4}}>Breakdown</p>
+            <h2 style={{fontSize:18, fontWeight:800, color:'#0a1628', marginBottom:20}}>Where your money goes</h2>
+
+            <div style={{display:'flex', flexDirection:'column', gap:0}}>
+              {[
+                { label: 'Gross pay', value: periodGross, color: '#0a1628', sub: fmt(totalAnnualGross) + '/yr', bold: false },
+                { label: 'Income tax', value: -periodTax, color: '#dc2626', sub: fmt(totalTax) + '/yr', bold: false },
+                { label: 'National Insurance', value: -periodNI, color: '#f59e0b', sub: fmt(totalNI) + '/yr', bold: false },
+                { label: 'Take-home pay', value: periodNet, color: '#16a34a', sub: fmt(totalAnnualNet) + '/yr', bold: true },
+              ].map((row, i) => (
+                <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 0', borderBottom: i < 3 ? '1px solid #f3f4f6' : 'none'}}>
+                  <div style={{display:'flex', alignItems:'center', gap:10}}>
+                    <div style={{width:4, height:32, borderRadius:4, background: row.color, flexShrink:0}}></div>
+                    <div>
+                      <p style={{fontSize:14, fontWeight: row.bold ? 700 : 500, color:'#0a1628'}}>{row.label}</p>
+                      <p style={{fontSize:12, color:'#9ca3af'}}>{row.sub}</p>
+                    </div>
+                  </div>
+                  <span style={{fontSize: row.bold ? 20 : 16, fontWeight: row.bold ? 800 : 600, color: row.color}}>
+                    {row.value < 0 ? '-' : ''}{fmt(Math.abs(row.value))}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <button onClick={addCategory} className="mt-4 text-sm text-blue-600 hover:text-blue-800">+ Add category</button>
-      </div>
+          </div>
 
-      {/* Summary card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <h2 className="font-medium text-black mb-4">Summary</h2>
-        <div className="flex gap-6 items-center flex-wrap mb-4">
-          <svg viewBox="0 0 200 200" className="w-40 h-40 shrink-0">
-            {pieSlices().map((s, i) => <path key={i} d={s.d} fill={s.color} />)}
-            <circle cx="100" cy="100" r="50" fill="white" />
-            <text x="100" y="96" textAnchor="middle" fontSize="14" fill={pct > 100 ? "#dc2626" : "#000000"} fontWeight="500">{pct}%</text>
-            <text x="100" y="112" textAnchor="middle" fontSize="10" fill="#000000">budgeted</text>
-          </svg>
-          <div className="space-y-2 flex-1 min-w-0">
-            {pieSlices().map((s, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: s.color }}></span>
-                <span className="text-xs text-black truncate">{s.name}</span>
-                <span className="text-xs font-medium text-black ml-auto shrink-0">{fmt(s.value)}</span>
-              </div>
-            ))}
+          {/* All periods */}
+          <div style={card}>
+            <p style={{fontSize:13, fontWeight:600, color:'#1a56db', textTransform:'uppercase', letterSpacing:1, marginBottom:4}}>All periods</p>
+            <h2 style={{fontSize:18, fontWeight:800, color:'#0a1628', marginBottom:20}}>Take-home by period</h2>
+            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+              {[
+                { label: 'Annual', value: totalAnnualNet },
+                { label: 'Monthly', value: totalAnnualNet / 12 },
+                { label: 'Weekly', value: totalAnnualNet / 52 },
+                { label: 'Daily', value: totalAnnualNet / 260 },
+              ].map(p => (
+                <div key={p.label} style={{background:'#f7f9ff', borderRadius:12, padding:'16px', border:'1px solid #e8f0fe'}}>
+                  <p style={{fontSize:12, color:'#6b7280', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:6}}>{p.label}</p>
+                  <p style={{fontSize:22, fontWeight:800, color:'#0a1628', letterSpacing:'-0.5px'}}>{fmt(p.value)}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-gray-50 rounded-xl p-3 text-center">
-            <p className="text-xs text-black mb-1">Total budgeted</p>
-            <p className="font-medium text-sm text-black">{fmt(total)}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl p-3 text-center">
-            <p className="text-xs text-black mb-1">Remaining</p>
-            <p style={{fontWeight: '600', fontSize: '16px', color: remaining < 0 ? '#dc2626' : '#16a34a'}}>
-              {remaining < 0 ? "-" : ""}{fmt(remaining)}
-            </p>
-          </div>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden" style={{marginBottom:'80px'}}>
-          <div style={{height:'100%', borderRadius:'999px', transition:'width 0.3s', width: pct >= 101 ? "100%" : pct + "%", backgroundColor: total > periodNet ? '#dc2626' : pct >= 76 ? '#f59e0b' : '#4ade80'}}></div>
-        </div>
-      </div>
 
+          {/* Tax bands info */}
+          <div style={card}>
+            <p style={{fontSize:13, fontWeight:600, color:'#1a56db', textTransform:'uppercase', letterSpacing:1, marginBottom:4}}>2024/25 Tax Bands</p>
+            <h2 style={{fontSize:18, fontWeight:800, color:'#0a1628', marginBottom:20}}>UK income tax rates</h2>
+            <div style={{display:'flex', flexDirection:'column', gap:8}}>
+              {[
+                { band: 'Personal allowance', range: 'Up to £12,570', rate: '0%', color: '#16a34a', active: totalAnnualGross > 0 },
+                { band: 'Basic rate', range: '£12,571 – £50,270', rate: '20%', color: '#1a56db', active: totalAnnualGross > 12570 },
+                { band: 'Higher rate', range: '£50,271 – £125,140', rate: '40%', color: '#f59e0b', active: totalAnnualGross > 50270 },
+                { band: 'Additional rate', range: 'Over £125,140', rate: '45%', color: '#dc2626', active: totalAnnualGross > 125140 },
+              ].map((band, i) => (
+                <div key={i} style={{display:'flex', alignItems:'center', gap:12, padding:'12px', borderRadius:10, background: band.active ? '#f7f9ff' : '#fafafa', border:'1px solid', borderColor: band.active ? '#e8f0fe' : '#f3f4f6', opacity: band.active ? 1 : 0.5}}>
+                  <div style={{width:36, height:36, borderRadius:10, background:band.color+'18', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                    <span style={{fontSize:13, fontWeight:800, color:band.color}}>{band.rate}</span>
+                  </div>
+                  <div style={{flex:1}}>
+                    <p style={{fontSize:13, fontWeight:600, color:'#0a1628', marginBottom:2}}>{band.band}</p>
+                    <p style={{fontSize:12, color:'#6b7280'}}>{band.range}</p>
+                  </div>
+                  {band.active && <span style={{fontSize:11, fontWeight:600, color:band.color, background:band.color+'18', padding:'3px 8px', borderRadius:20}}>Applies</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {totalAnnualGross === 0 && (
+        <div style={{...card, textAlign:'center', padding:'48px 24px'}}>
+          <div style={{fontSize:40, marginBottom:12}}>💷</div>
+          <p style={{fontSize:16, fontWeight:700, color:'#0a1628', marginBottom:6}}>Enter your income above</p>
+          <p style={{fontSize:14, color:'#6b7280'}}>Select your pay type and enter an amount to see your take-home pay calculated instantly.</p>
+        </div>
+      )}
     </div>
   );
 }
