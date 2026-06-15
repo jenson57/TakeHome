@@ -320,7 +320,7 @@ export default function DebtPage() {
                 <label style={{ fontSize: 12, color: '#374151', fontWeight: 600, display: 'block', marginBottom: 6 }}>Debt name</label>
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. Barclaycard, Santander loan"
-                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }} />
+                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, color: '#0a1628' }} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#374151', fontWeight: 600, display: 'block', marginBottom: 6 }}>Debt type</label>
@@ -331,21 +331,24 @@ export default function DebtPage() {
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#374151', fontWeight: 600, display: 'block', marginBottom: 6 }}>Current balance (£)</label>
-                <input type="number" value={form.balance} onChange={e => setForm(f => ({ ...f, balance: e.target.value }))}
+                <input type="number" value={form.balance || ''} onChange={e => setForm(f => ({ ...f, balance: e.target.value }))}
+                  onFocus={e => setTimeout(() => e.target.select(), 0)}
                   placeholder="0.00"
-                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }} />
+                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, color: '#0a1628' }} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#374151', fontWeight: 600, display: 'block', marginBottom: 6 }}>Annual interest rate (%)</label>
-                <input type="number" value={form.interest_rate} onChange={e => setForm(f => ({ ...f, interest_rate: e.target.value }))}
+                <input type="number" value={form.interest_rate || ''} onChange={e => setForm(f => ({ ...f, interest_rate: e.target.value }))}
+                  onFocus={e => setTimeout(() => e.target.select(), 0)}
                   placeholder="e.g. 19.9"
-                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }} />
+                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, color: '#0a1628' }} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#374151', fontWeight: 600, display: 'block', marginBottom: 6 }}>Minimum monthly payment (£)</label>
-                <input type="number" value={form.minimum_payment} onChange={e => setForm(f => ({ ...f, minimum_payment: e.target.value }))}
+                <input type="number" value={form.minimum_payment || ''} onChange={e => setForm(f => ({ ...f, minimum_payment: e.target.value }))}
+                  onFocus={e => setTimeout(() => e.target.select(), 0)}
                   placeholder="0.00"
-                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }} />
+                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14, color: '#0a1628' }} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
@@ -435,8 +438,10 @@ export default function DebtPage() {
                 <div style={{ background: '#f7f9ff', border: '1px solid #e8f0fe', borderRadius: 10, padding: 16, marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 20, fontWeight: 700, color: '#1a56db' }}>£</span>
-                    <input type="number" value={monthlyBudget} onChange={e => setMonthlyBudget(parseFloat(e.target.value) || 0)}
-                      style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 28, fontWeight: 800, color: '#0a1628', outline: 'none' }} />
+ <input type="number" value={monthlyBudget || ''}
+                    onChange={e => setMonthlyBudget(parseFloat(e.target.value) || 0)}
+                    onFocus={e => setTimeout(() => e.target.select(), 0)}
+                    style={{flex: 1, border: 'none', background: 'transparent', fontSize: 28, fontWeight: 800, color: '#0a1628', outline: 'none'}} />
                     <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>/ month</span>
                   </div>
                   <p style={{ fontSize: 12, color: '#6b7280' }}>Min. required: {fmt(totalMinimums)}/mo</p>

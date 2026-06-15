@@ -191,7 +191,7 @@ export default function BillsPage() {
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. Netflix, Rent, Council Tax"
-                  style={{ width: '100%', marginTop: 4, padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
+                  style={{ width: '100%', marginTop: 4, padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', color: '#0a1628' }}
                 />
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -199,8 +199,9 @@ export default function BillsPage() {
                   <label style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>Amount (£)</label>
                   <input
                     type="number"
-                    value={form.amount}
+                    value={form.amount || ''}
                     onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                    onFocus={e => setTimeout(() => e.target.select(), 0)}
                     placeholder="0.00"
                     style={{ width: '100%', marginTop: 4, padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
                   />
@@ -209,8 +210,9 @@ export default function BillsPage() {
                   <label style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>Due day</label>
                   <input
                     type="number"
-                    value={form.due_day}
+                    value={form.due_day || ''}
                     onChange={e => setForm(f => ({ ...f, due_day: e.target.value }))}
+                    onFocus={e => setTimeout(() => e.target.select(), 0)}
                     placeholder="1–31"
                     min="1" max="31"
                     style={{ width: '100%', marginTop: 4, padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}

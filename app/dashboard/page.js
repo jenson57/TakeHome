@@ -507,9 +507,9 @@ export default function Dashboard() {
                 <span style={{color:'#1a56db', fontSize:'15px', fontWeight:'700'}}>£</span>
                 <input type="text" inputMode="numeric" value={netPay || ''}
                   onChange={e => setNetPay(parseFloat(e.target.value.replace(/[^0-9.]/g, '')) || 0)}
-                  onFocus={e => setTimeout(() => e.target.select(), 0)}
+                  onFocus={e => { setTimeout(() => e.target.select(), 0); }}
                   placeholder="0"
-                  style={{width:'75px', border:'none', outline:'none', fontSize:'15px', fontWeight:'700', color:'#0a1628'}} />
+                  style={{width:'75px', border:'none', outline:'none', fontSize:'15px', fontWeight:'700', color:'#0a1628', background:'transparent'}} />
               </div>
             </div>
             <button onClick={() => { setShowForm(true); setEditingId(null); setForm({ date:"", description:"", amount:"", category:"" }); }}
