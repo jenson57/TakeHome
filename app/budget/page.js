@@ -119,9 +119,13 @@ Keep responses focused and actionable. Use markdown formatting with **bold** for
         conversationMessages.push({ role: 'user', content: text });
       }
 
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/budget/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           systemPrompt,
           messages: conversationMessages,

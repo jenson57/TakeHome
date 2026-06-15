@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server';
 export async function POST(request) {
   try {
     const { messages, systemPrompt } = await request.json();
+    if (!messages || !Array.isArray(messages) || messages.length > 50) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
