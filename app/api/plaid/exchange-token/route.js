@@ -25,7 +25,9 @@ export async function POST(request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { public_token } = await request.json();
-    if (!public_token) return NextResponse.json({ error: 'No public_token' }, { status: 400 });
+    if (!public_token || typeof public_token !== 'string' || public_token.length > 200) {
+      return NextResponse.json({ error: 'Invalid public_token' }, { status: 400 });
+    }
 
     const exchangeResponse = await plaidClient.itemPublicTokenExchange({ public_token });
     const accessToken = exchangeResponse.data.access_token;

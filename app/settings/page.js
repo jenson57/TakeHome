@@ -316,7 +316,24 @@ const handleEmailUpdate = async () => {
           <p style={{fontSize:'13px', fontWeight:'600', color:'#dc2626', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px'}}>Danger zone</p>
           <h2 style={{fontSize:'18px', fontWeight:'800', color:'#0a1628', marginBottom:'8px'}}>Delete account</h2>
           <p style={{fontSize:'14px', color:'#6b7280', marginBottom:'20px'}}>Permanently delete your account and all your data. This cannot be undone.</p>
-          <button onClick={() => { if (window.confirm("Are you sure? This will permanently delete your account and all data.")) { supabase.auth.signOut(); router.push("/login"); } }}
+          <button onClick={async () => {
+  if (window.confirm("Are you sure? This will permanently delete your account and all data. This cannot be undone.")) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await Promise.all([
+        supabase.from('transactions').delete().eq('user_id', user.id),
+        supabase.from('bills').delete().eq('user_id', user.id),
+        supabase.from('subscriptions').delete().eq('user_id', user.id),
+        supabase.from('budget_settings').delete().eq('user_id', user.id),
+        supabase.from('alert_settings').delete().eq('user_id', user.id),
+        supabase.from('bank_connections').delete().eq('user_id', user.id),
+        supabase.from('debts').delete().eq('user_id', user.id),
+      ]);
+    }
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+}}
             style={{background:'#fef2f2', color:'#dc2626', padding:'12px 28px', borderRadius:'10px', fontSize:'14px', fontWeight:'700', border:'1px solid #fecaca', cursor:'pointer'}}>
             Delete my account
           </button>
