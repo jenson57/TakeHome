@@ -465,11 +465,10 @@ export default function DebtPage() {
               <>
                 {/* Results hero */}
                 <div style={{ background: 'linear-gradient(135deg, #1a56db, #0e3fa8)', borderRadius: 16, padding: 24, marginBottom: 20 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="debt-grid">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }} className="debt-grid">
                     {[
                       { label: 'Debt-free date', value: plan.debtFreeDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) },
                       { label: 'Months to freedom', value: `${plan.months} months` },
-                      { label: 'Interest saved', value: fmt(plan.interestSaved) },
                     ].map(s => (
                       <div key={s.label} style={{ textAlign: 'center' }}>
                         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{s.label}</p>
