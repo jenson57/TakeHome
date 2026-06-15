@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
           color: '#9ca3af',
           marginTop: 'auto',
         }}>
-          🔒 Your data is encrypted and protected. Takehome never sells your personal or financial information. &nbsp;·&nbsp; © {new Date().getFullYear()} Takehome
+          🔒 Your data is encrypted and protected. Takehome never sells your personal or financial information. &nbsp;·&nbsp; <a href="/privacy" style={{color:'#9ca3af', textDecoration:'none'}}>Privacy Policy</a> &nbsp;·&nbsp; <a href="/terms" style={{color:'#9ca3af', textDecoration:'none'}}>Terms of Service</a> &nbsp;·&nbsp; © {new Date().getFullYear()} Takehome
         </footer>
       </body>
     </html>
