@@ -78,6 +78,7 @@ export default function Dashboard() {
   const [bankConnected, setBankConnected] = useState(false);
   const [importing, setImporting] = useState(false);
   const [linkToken, setLinkToken] = useState(null);
+  const [bills, setBills] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [showSubForm, setShowSubForm] = useState(false);
   const [subForm, setSubForm] = useState({ name: '', amount: '' });
@@ -128,6 +129,8 @@ export default function Dashboard() {
       if (bankConn) setBankConnected(true);
       const { data: subs } = await supabase.from("subscriptions").select("*").eq("user_id", user.id).eq("is_active", true);
       if (subs) setSubscriptions(subs);
+      const { data: billsData } = await supabase.from("bills").select("*").eq("user_id", user.id).eq("is_active", true);
+      if (billsData) setBills(billsData);
       setLoading(false);
     };
     init();
@@ -559,23 +562,77 @@ export default function Dashboard() {
         )}
 
         {/* Summary cards */}
-        <div className="summary-grid" style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'16px', marginBottom:'24px'}}>
-          {[
-            { label:"Take-home pay", value:fmt(netPay), sub:"this month", valueColor:'#0a1628', icon:'💰' },
-            { label:"Total spent", value:fmt(totalSpent), sub:`${spentPct}% of income`, valueColor: spentPct >= 101 ? '#dc2626' : '#0a1628', icon:'💳' },
-            { label:"Remaining", value:fmt(remaining), sub: remaining < 0 ? "Over budget" : "left to spend", valueColor: remaining < 0 ? '#dc2626' : '#1a56db', icon:'📊' },
-            { label:"Transactions", value:transactions.length, sub:"this month", valueColor:'#0a1628', icon:'🧾' },
-          ].map(s => (
-            <div key={s.label} style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'22px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px'}}>
-                <p style={{fontSize:'12px', color:'#6b7280', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px'}}>{s.label}</p>
-                <span style={{fontSize:'20px'}}>{s.icon}</span>
+        {(() => {
+          const totalBills = bills.reduce((s, b) => s + parseFloat(b.amount), 0);
+          const afterBills = netPay - totalBills;
+          const afterBillsAndSpending = netPay - totalBills - totalSpent;
+          return (
+            <>
+              <div className="summary-grid" style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'16px', marginBottom:'16px'}}>
+                {[
+                  { label:"Take-home pay", value:fmt(netPay), sub:"this month", valueColor:'#0a1628', icon:'💰' },
+                  { label:"Total spent", value:fmt(totalSpent), sub:`${spentPct}% of income`, valueColor: spentPct >= 101 ? '#dc2626' : '#0a1628', icon:'💳' },
+                  { label:"Remaining", value:fmt(remaining), sub: remaining < 0 ? "Over budget" : "left to spend", valueColor: remaining < 0 ? '#dc2626' : '#1a56db', icon:'📊' },
+                  { label:"Transactions", value:transactions.length, sub:"this month", valueColor:'#0a1628', icon:'🧾' },
+                ].map(s => (
+                  <div key={s.label} style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'22px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px'}}>
+                      <p style={{fontSize:'12px', color:'#6b7280', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px'}}>{s.label}</p>
+                      <span style={{fontSize:'20px'}}>{s.icon}</span>
+                    </div>
+                    <p style={{fontSize:'28px', fontWeight:'800', color:s.valueColor, marginBottom:'4px', letterSpacing:'-0.5px'}}>{s.value}</p>
+                    <p style={{fontSize:'12px', color:'#9ca3af'}}>{s.sub}</p>
+                  </div>
+                ))}
               </div>
-              <p style={{fontSize:'28px', fontWeight:'800', color:s.valueColor, marginBottom:'4px', letterSpacing:'-0.5px'}}>{s.value}</p>
-              <p style={{fontSize:'12px', color:'#9ca3af'}}>{s.sub}</p>
-            </div>
-          ))}
-        </div>
+
+              {bills.length > 0 && (
+                <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'20px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexWrap:'wrap', gap:'12px'}}>
+                    <div>
+                      <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'2px'}}>Bills forecast</p>
+                      <p style={{fontSize:'13px', color:'#6b7280'}}>{bills.length} upcoming bill{bills.length !== 1 ? 's' : ''} this month totalling <strong style={{color:'#0a1628'}}>{fmt(totalBills)}</strong></p>
+                    </div>
+                    <Link href="/bills" style={{fontSize:'13px', color:'#1a56db', fontWeight:'600', textDecoration:'none', background:'#f0f5ff', padding:'6px 14px', borderRadius:'8px', border:'1px solid #e8f0fe'}}>
+                      Manage bills →
+                    </Link>
+                  </div>
+                  <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'12px', marginBottom:'16px'}}>
+                    {[
+                      { label: 'Bills total', value: fmt(totalBills), color: '#f59e0b', icon: '🧾' },
+                      { label: 'After bills', value: fmt(afterBills), color: afterBills < 0 ? '#dc2626' : '#1a56db', icon: '💵' },
+                      { label: 'After bills & spending', value: fmt(afterBillsAndSpending), color: afterBillsAndSpending < 0 ? '#dc2626' : '#16a34a', icon: '✅' },
+                    ].map(s => (
+                      <div key={s.label} style={{background:'#f7f9ff', border:'1px solid #e8f0fe', borderRadius:'12px', padding:'14px'}}>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'8px'}}>
+                          <p style={{fontSize:'11px', color:'#6b7280', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px'}}>{s.label}</p>
+                          <span style={{fontSize:'16px'}}>{s.icon}</span>
+                        </div>
+                        <p style={{fontSize:'20px', fontWeight:'800', color:s.color, letterSpacing:'-0.5px'}}>{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'160px', overflowY:'auto'}}>
+                    {bills.sort((a, b) => a.due_day - b.due_day).map(bill => {
+                      const today = new Date();
+                      const due = new Date(today.getFullYear(), today.getMonth(), bill.due_day);
+                      const next = due >= today ? due : new Date(today.getFullYear(), today.getMonth() + 1, bill.due_day);
+                      const daysAway = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
+                      return (
+                        <div key={bill.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'8px 10px', borderRadius:'8px', background: daysAway <= 7 ? '#fffbeb' : '#f9fafb', border:`1px solid ${daysAway <= 7 ? '#fcd34d' : '#f3f4f6'}`}}>
+                          <span style={{fontSize:'14px'}}>{daysAway <= 7 ? '⚠️' : '📅'}</span>
+                          <span style={{fontSize:'13px', fontWeight:'600', color:'#0a1628', flex:1}}>{bill.name}</span>
+                          <span style={{fontSize:'12px', color:'#6b7280'}}>Due {bill.due_day}{['st','nd','rd'][(bill.due_day % 10) - 1] || 'th'} · {daysAway === 0 ? 'today' : `${daysAway}d`}</span>
+                          <span style={{fontSize:'13px', fontWeight:'700', color:'#0a1628'}}>{fmt(bill.amount)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* Progress bar */}
         <div style={{background:'white', border:'1px solid #e8f0fe', borderRadius:'16px', padding:'24px', marginBottom:'24px', boxShadow:'0 2px 8px rgba(26,86,219,0.04)'}}>
