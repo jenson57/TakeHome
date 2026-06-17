@@ -2,10 +2,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Job Offer Comparison — Takehome',
-  description: 'Compare two job offers side by side and see the real take-home pay difference after UK tax, NI, and pension.',
-};
 
 function calcTax(gross) {
   const pa = 12570, basic = 50270, higher = 125140;
