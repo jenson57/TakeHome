@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "../supabase";
 import { useRouter } from "next/navigation";
-import { usePlaidLink } from "react-plaid-link";
+// TrueLayer handles auth via redirect - no client library needed
 
 const CATEGORIES = [
   { name: "Housing", keywords: ["rent", "mortgage", "letting", "estate"], color: "#1a56db", icon: "🏠" },
@@ -77,7 +77,6 @@ export default function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [bankConnected, setBankConnected] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [linkToken, setLinkToken] = useState(null);
   const [bills, setBills] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [showSubForm, setShowSubForm] = useState(false);
@@ -85,40 +84,31 @@ export default function Dashboard() {
   const [subSaving, setSubSaving] = useState(false);
   const router = useRouter();
 
-  const createLinkToken = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch('/api/plaid/create-link-token', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${session.access_token}` }
-    });
-    const data = await res.json();
-    if (data.link_token) setLinkToken(data.link_token);
+  const connectBank = () => {
+    window.location.href = '/api/truelayer/auth';
   };
-
-  const onPlaidSuccess = async (public_token) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    await fetch('/api/plaid/exchange-token', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ public_token })
-    });
-    setBankConnected(true);
-  };
-
-  const { open: openPlaid, ready: plaidReady } = usePlaidLink({
-    token: linkToken,
-    onSuccess: onPlaidSuccess,
-  });
-
-  useEffect(() => {
-    if (linkToken && plaidReady) openPlaid();
-  }, [linkToken, plaidReady]);
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
       setUser(user);
+
+      // Handle TrueLayer callback — save token from cookie
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('bank') === 'connected') {
+        const { data: { session } } = await supabase.auth.getSession();
+        const cookieToken = document.cookie.split('; ').find(r => r.startsWith('tl_access_token='))?.split('=')[1];
+        const cookieRefresh = document.cookie.split('; ').find(r => r.startsWith('tl_refresh_token='))?.split('=')[1];
+        if (cookieToken) {
+          await fetch('/api/truelayer/save-token', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: cookieToken, refresh_token: cookieRefresh }),
+          });
+          window.history.replaceState({}, '', '/dashboard');
+        }
+      }
       const { data: txns } = await supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false });
       if (txns) setTransactions(txns);
       const { data: settings } = await supabase.from("budget_settings").select("*").eq("user_id", user.id).single();
@@ -206,7 +196,7 @@ export default function Dashboard() {
   const importTransactions = async () => {
     setImporting(true);
     const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch("/api/plaid/transactions", {
+    const res = await fetch("/api/truelayer/transactions", {
       headers: { Authorization: `Bearer ${session.access_token}` }
     });
     const data = await res.json();
@@ -516,7 +506,7 @@ export default function Dashboard() {
               style={{background:'linear-gradient(135deg, #1a56db, #0e3fa8)', color:'white', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'none', cursor:'pointer', boxShadow:'0 4px 12px rgba(26,86,219,0.3)'}}>
               + Add transaction
             </button>
-            <button onClick={createLinkToken} disabled={!user}
+            <button onClick={connectBank}
               style={{background:'white', color:'#1a56db', padding:'12px 22px', borderRadius:'12px', fontSize:'14px', fontWeight:'700', border:'2px solid #1a56db', cursor:'pointer'}}>
               🏦 {bankConnected ? "Reconnect bank" : "Connect bank"}
             </button>
