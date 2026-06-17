@@ -92,7 +92,10 @@ export default function CalculatorPage() {
       <div className="max-w-2xl mx-auto px-4 py-10" style={{paddingBottom:'100px'}}>
         <p style={{fontSize:'13px', fontWeight:'600', color:'#1a56db', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'6px'}}>UK Tax Calculator</p>
         <h1 style={{fontSize:'32px', fontWeight:'800', color:'#0a1628', letterSpacing:'-0.5px', marginBottom:'6px'}}>Take-home Pay</h1>
-        <p style={{fontSize:'15px', color:'#6b7280', marginBottom:'32px'}}>Based on 2024/25 UK tax rates · Income tax + National Insurance</p>
+        <p style={{fontSize:'15px', color:'#6b7280', marginBottom:'16px'}}>Based on 2024/25 UK tax rates · Income tax + National Insurance</p>
+        <Link href="/compare" style={{display:'inline-flex', alignItems:'center', gap:8, background:'white', border:'1px solid #e8f0fe', borderRadius:10, padding:'10px 18px', fontSize:14, fontWeight:600, color:'#1a56db', textDecoration:'none', marginBottom:'32px', boxShadow:'0 2px 8px rgba(26,86,219,0.06)'}}>
+          💼 Compare two job offers →
+        </Link>
         <Calculator />
       </div>
 
